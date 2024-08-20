@@ -1,4 +1,5 @@
-#  python -m venv .venv
+# python -m venv .venv
+# source  .venv/Scripts/activate
 
 from flask import Flask, render_template, redirect
 from flask_sqlalchemy import SQLAlchemy
@@ -28,15 +29,8 @@ class Task(db.Model):
 def index():
     return render_template('index.html')
 
-@app.route('/add-task', methods=['GET', 'POST'])
+@app.route('/add-task') #methods = GET, POST
 def add_task():
-    if request.method == 'POST':
-        title = request.form['title']
-        description = request.form['description']
-        new_task = Task(title=title, description=description)
-        db.session.add(new_task)
-        db.session.commit()
-        return redirect('/')
     return render_template('add_task.html')
 
 
@@ -59,3 +53,15 @@ if __name__ == '__main__':
     db.session.commit()
     '''
     app.run() #debug=True
+
+
+
+    '''
+    if request.method == 'POST':
+        title = request.form['title']
+        description = request.form['description']
+        new_task = Task(title=title, description=description)
+        db.session.add(new_task)
+        db.session.commit()
+        return redirect('/')
+    '''
