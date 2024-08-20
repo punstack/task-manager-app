@@ -5,6 +5,18 @@
 <ul>
   {% for task in tasks %}
     <li>{{ task.title }} - {{ 'Completed' if task.completed else 'Pending' }}</li>
+    <ul>
+      {% if task.checklist_item %}
+        <li>{{ task.checklist_item }}</li>
+      {% endif %}
+    </ul>
+    {% if task.description %}
+      <li>{{ task.description }}</li>
+    {% endif %}
+    {% if task.due_date %}
+      <li>{{ task.due_date }}</li>
+    {% endif %}
+    <br>
   {% endfor %}
 </ul>
 <a href="/add-task">Add a new task</a>
