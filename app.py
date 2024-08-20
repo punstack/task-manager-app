@@ -26,15 +26,28 @@ class Task(db.Model):
         self.due_date = due_date
         self.completed = completed
 
+class User(db.Model):
+    id = db.Column(db.Integer, primary_key = True)
+    user = db.Column(db.String(20), nullable = False)
+    password = db.Column(db.String(50), nullable = False)
+
+    def __init__(self, user, password):
+        self.user = user
+        self.password = password
 
 @app.route('/')
 def index():
-    ''' # remove all entries in the database
+    # remove all entries in the database
+    '''
     for task in Task.query.all():
         Task.query.delete()
     db.session.commit()
-    '''
+    '''    
     return render_template('index.html', tasks = Task.query.all())
+
+@app.route('/home')
+def home():
+    return render_template('home.html', tasks = Task.query.all())
 
 @app.route('/add-task', methods = ["GET", "POST"])
 def add_task():
@@ -57,20 +70,14 @@ def add_task():
 def view():
     return render_template("view.html", values=Task.query.all())
 
-'''
+
 @app.route("/login", methods = ["GET", "POST"])
 def login():
     if request.method == "POST":
-        session.permanent = True
         user = request.form["nm"]
-        session["user"] = user
         return redirect(url_for("user"))
-
-    else:
-        if "user" in session:
-            return redirect(url_for("user"))
-        return render_template('login.html')
-
+    return render_template("login.html")
+'''
 @app.route("/user")
 def user():
     if "user" in session:

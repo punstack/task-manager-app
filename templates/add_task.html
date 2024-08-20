@@ -2,21 +2,29 @@
 {% block title %}Add Task{% endblock %}
 {% block home_status %}{% endblock %}
 {% block add_status %}active{% endblock %}
+{% block login_status %}{% endblock %}
 {% block content %}
 <form action = "#" method = "POST">
-    <label for = "title">Task Name:</label><br>
-    <input type = "text" id = "title" name = "title"><br>
+    <div class="form-group, col-12">
+      <label for="title">Task name</label>
+      <input type="text" class="form-control" id="title" placeholder="Enter task name...">
+    </div>
+    <div class="form-group, col-12">
+        <label for="description">Task description</label>
+        <textarea class="form-control" id="description" rows="3"></textarea>
+    </div>
+    <div class="form-group, col-12">
+        <label for="description">Sub-task</label>
+        <input type="text" class="form-control" id="checklist_item" placeholder="Enter sub-task...">
+    </div>
+    <div class="form-group, col-12">
+        <label for="description">Due date</label>
+        <input type="date" class="form-control" id="due_date">
+    </div>
+    <br>
+    <button type="submit" class="btn btn-primary">Submit</button>
+</form> <br>
 
-    <label for = "description">Task Description:</label><br>
-    <input type = "text" id = "description" name = "description"><br>
-
-    <label for = "checklist_item">Sub-task:</label><br>
-    <input type = "text" id = "checklist_item" name = "checklist_item"><br>
-        
-    <label for = "due_date">Due Date:</label><br>
-    <input type = "date" id = "due_date" name = "due_date"><br>
-    <input type = "submit" value = "Submit">
-</form>
 <a href="/">Cancel</a>
 <a href="/">Submit</a>
 {% endblock %}
