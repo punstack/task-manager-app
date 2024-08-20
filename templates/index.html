@@ -1,15 +1,11 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <title>Task Manager</title>
-  </head>
-  <body>
-    <h1>Task Manager</h1>
-    <ul>
-      {% for task in tasks %}
-        <li>{{ task.title }} - {{ 'Completed' if task.completed else 'Pending' }}</li>
-      {% endfor %}
-    </ul>
-    <a href="/add-task">Add a new task</a>
-  </body>
-</html>
+{% extends "layout.html" %}
+{% block home_status %}active{% endblock %}
+{% block add_status %}{% endblock %}
+{% block content %}
+<ul>
+  {% for task in tasks %}
+    <li>{{ task.title }} - {{ 'Completed' if task.completed else 'Pending' }}</li>
+  {% endfor %}
+</ul>
+<a href="/add-task">Add a new task</a>
+{% endblock %}
