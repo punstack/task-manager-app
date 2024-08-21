@@ -6,9 +6,13 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from datetime import datetime, timedelta
 from werkzeug.security import generate_password_hash, check_password_hash
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
 
 app = Flask(__name__)
-app.secret_key = "rehash-necessary"
+app.secret_key = os.getenv('FLASK_SECRET_KEY', 'default_key_for_dev')
 app.permanent_session_lifetime = timedelta(days=1)
 
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db' # "tasks" and "users" table
