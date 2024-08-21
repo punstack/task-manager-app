@@ -13,8 +13,8 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db' # "tasks" and "users"
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
-
 class Task(db.Model):
+    __tablename__ = 'Tasks'
     id = db.Column(db.Integer, primary_key = True)
     title = db.Column(db.String(100), nullable = False)
     description = db.Column(db.String(200), default = None)
@@ -30,6 +30,7 @@ class Task(db.Model):
         self.completed = completed
 
 class User(db.Model):
+    __tablename__ = 'Users'
     id = db.Column(db.Integer, primary_key = True)
     user = db.Column(db.String(20), nullable = False)
     email = db.Column(db.String(100), nullable = False)
@@ -78,38 +79,56 @@ def add_task():
 def view():
     return render_template("view.html", values=Task.query.all())
 
+@app.route("/view_users")
+def view_users():
+    return render_template("view_users.html", values=User.query.all())
 
-@app.route("/login", methods = ["GET", "POST"]) # issue with "user() getting an unexpected keyword argument 'user'"
+
+@app.route("/login", methods = ["GET", "POST"])
 def login():
-    user = None
     if request.method == "POST":
         session.permanent = True
         user = request.form["username"]
-        session["user"] = user
-        return redirect(url_for("user"))
+        password = request.form["password"]
+        if password == User.query.filter_by(user = user).first()[2]:
+            session["user"] = user
+            return redirect(url_for("user_page"))
+        else:
+            flash("The password you have entered does not match the password in our system.", "info")
+            return render_template("login.html")
     else:
         if "user" in session:
-            return redirect(url_for("user"))
+            return redirect(url_for("user_page"))
         return render_template("login.html")
 
-@app.route("/sign-up", methods = ["GET", "POST"]) # issue with "user() getting an unexpected keyword argument 'user'"
+@app.route("/sign-up", methods = ["GET", "POST"])
 def signup():
     if request.method == "POST":
-        email = request.form["inputEmail"]
+        email = request.form["email"]
         user = request.form["username"]
-        password = request.form["inputPassword"]
-        new_user = User(user = user, email = email, password = password)
-        db.session.add(new_user)
-        db.session.commit()
-        return redirect(url_for("user"))
-    return render_template("signup.html")
+        password = request.form["password"]
 
-@app.route("/<user>")
-def user():
-    if "user" in session:
-        user = session["user"]
-        return render_template("user.html")
+        if user not in User.query.filter_by(user = user):
+            session['user'] = user
+
+            new_user = User(user = user, email = email, password = password)
+            db.session.add(new_user)
+            db.session.commit()
+            return redirect(url_for("user_page"))
+        else:
+            flash("An account with this username already exists.", "info")
+            return render_template("signup.html")
     else:
+        return render_template("signup.html")
+
+@app.route("/user")
+def user_page():
+    if "user" in session:
+        print("made it to the correct statement")
+        user = session["user"]
+        return render_template("user.html", user = user)
+    else:
+        print("made it to the incorrect statement")
         return redirect(url_for("login"))
 
 @app.route("/logout")
