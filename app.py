@@ -1,15 +1,18 @@
 # python -m venv .venv
 # source  .venv/Scripts/activate
 
-from flask import Flask, render_template, redirect, request, url_for
+from flask import Flask, render_template, redirect, request, url_for, session, flash
 from flask_sqlalchemy import SQLAlchemy
-from datetime import datetime
+from datetime import datetime, timedelta
 
 app = Flask(__name__)
+app.secret_key = "rehash-necessary"
+app.permanent_session_lifetime = timedelta(days=1)
 
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db' # "tasks" and "users" table
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
+
 
 class Task(db.Model):
     id = db.Column(db.Integer, primary_key = True)
@@ -29,10 +32,12 @@ class Task(db.Model):
 class User(db.Model):
     id = db.Column(db.Integer, primary_key = True)
     user = db.Column(db.String(20), nullable = False)
+    email = db.Column(db.String(100), nullable = False)
     password = db.Column(db.String(50), nullable = False)
 
-    def __init__(self, user, password):
+    def __init__(self, user, email, password):
         self.user = user
+        self.email = email
         self.password = password
 
 with app.app_context():
@@ -74,18 +79,38 @@ def view():
     return render_template("view.html", values=Task.query.all())
 
 
-@app.route("/login", methods = ["GET", "POST"])
+@app.route("/login", methods = ["GET", "POST"]) # issue with "user() getting an unexpected keyword argument 'user'"
 def login():
+    user = None
     if request.method == "POST":
-        user = request.form["nm"]
+        session.permanent = True
+        user = request.form["username"]
+        session["user"] = user
         return redirect(url_for("user"))
-    return render_template("login.html")
-'''
-@app.route("/user")
+    else:
+        if "user" in session:
+            return redirect(url_for("user"))
+        return render_template("login.html")
+
+@app.route("/sign-up", methods = ["GET", "POST"]) # issue with "user() getting an unexpected keyword argument 'user'"
+def signup():
+    if request.method == "POST":
+        email = request.form["inputEmail"]
+        user = request.form["username"]
+        password = request.form["inputPassword"]
+        new_user = User(user = user, email = email, password = password)
+        db.session.add(new_user)
+        db.session.commit()
+        return redirect(url_for("user"))
+    return render_template("signup.html")
+
+@app.route("/<user>")
 def user():
     if "user" in session:
         user = session["user"]
-        return render_template("task_list.html")
+        return render_template("user.html")
+    else:
+        return redirect(url_for("login"))
 
 @app.route("/logout")
 def logout():
@@ -93,36 +118,7 @@ def logout():
         flash("You have been logged out.", "info")
     session.pop("user", None)
     return redirect(url_for("login"))
-'''
+
 
 if __name__ == '__main__':
-    
-    #db.create_all() #for some reason, running this code breaks the web app :(
-    '''
-    new_task = Task(title="Sample Task", description="This is a task")
-    db.session.add(new_task)
-    db.session.commit()
-    
-    tasks = Task.query.all()
-
-    task = Task.query.get(task_id)
-    task.completed = True
-    db.session.commit()
-
-    task = Task.query.get(task_id)
-    db.session.delete(task)
-    db.session.commit()
-    '''
     app.run(debug=True)
-
-
-
-    '''
-    if request.method == 'POST':
-        title = request.form['title']
-        description = request.form['description']
-        new_task = Task(title=title, description=description)
-        db.session.add(new_task)
-        db.session.commit()
-        return redirect('/')
-    '''
