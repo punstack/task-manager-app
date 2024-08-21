@@ -53,7 +53,7 @@ with app.app_context():
 @app.route('/')
 def index():
     # remove all entries in the database
-    #'''
+    '''
     for task in Task.query.all():
         Task.query.delete()
     db.session.commit()
@@ -61,7 +61,7 @@ def index():
     for user in User.query.all():
         User.query.delete()
     db.session.commit()
-    #'''
+    '''
     return render_template('index.html')
 
 @app.route('/home')
@@ -97,7 +97,7 @@ def login():
         user = request.form["username"]
         password = request.form["password"]
 
-        stored_user = User.query.filter_by(user = user).first()
+        stored_user = User.query.filter_by(user = user).first() # this should be False if new user, True if existing user
 
         if stored_user and check_password_hash(stored_user.password, password):
             print("the if statement won")
@@ -109,7 +109,6 @@ def login():
             flash("The password you have entered does not match the password in our system.", "info")
             return render_template("login.html")
     else:
-        print("it's a REAL problem if we're here LOL")
         return render_template("login.html")
 
 @app.route("/sign-up", methods = ["GET", "POST"])
@@ -129,7 +128,7 @@ def signup():
             return render_template("signup.html")
         else:
             session['user'] = user
-            hashed_password = generate_password_hash(password, method = "sha256")
+            hashed_password = generate_password_hash(password, method = "pbkdf2:sha256")
             new_user = User(user = user, email = email, password = hashed_password)
             db.session.add(new_user)
             db.session.commit()
