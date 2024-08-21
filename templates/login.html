@@ -5,15 +5,15 @@
 {% block login_status %}(active){% endblock %}
 {% block content %}
 <body class="text-center">
-    <form class = "form-signin" action = "#" method = "GET">
+    <form class = "form-signin" action = "#" method = "POST">
         <img class="mb-4" src="UPDATE LOGO.img" alt="" width="72" height="72">
         <h1 class="h3 mb-3 font-weight-normal">Please sign in</h1>
         <label for="username" class="sr-only">Username</label>
-        <input type="text" id="username" class="form-control, col-6" placeholder="Enter your username..." required="" autofocus="">
+        <input type="text" id="username" name = "username" class="form-control, col-6" placeholder="Enter your username..." required="" autofocus="">
         <br>
         <br>
         <label for="inputPassword" class="sr-only">Password</label>
-        <input type="password" id="inputPassword" class="form-control, col-6" placeholder="Enter your password..." required="">
+        <input type="password" id="password" name = "password" class="form-control, col-6" placeholder="Enter your password..." required="">
         <button class="btn btn-lg btn-primary btn-block" type="submit">Sign in</button>
     </form>
 </body>
