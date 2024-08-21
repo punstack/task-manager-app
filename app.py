@@ -47,7 +47,7 @@ class User(db.Model):
         self.password = password
 
 with app.app_context():
-    db.drop_all() # drop all tables
+    #db.drop_all() # drop all tables // not necessary unless new columns are added to models
     db.create_all() # create tables based on models
 
 @app.route('/')
@@ -75,8 +75,11 @@ def add_task():
         description = request.form["description"] # else None
         checklist_item = request.form["checklist_item"] # else None
         due_date = request.form["due_date"] # else None # prints as YYYY-MM-DD
-        if type(due_date) is str:
-            due_date = datetime.strptime(due_date, '%Y-%m-%d')
+        try:
+            if type(due_date) is str:
+                due_date = datetime.strptime(due_date, '%Y-%m-%d')
+        except:
+            due_date = None
         if "user" in session:
             user = session["user"]
         else:
@@ -139,7 +142,9 @@ def signup():
 @app.route("/<user>")
 def user_page(user):
     if "user" in session:
-        return render_template("user.html", user = session["user"])
+        #TODO: make sure that, when a user is in session, they can only view THEIR tasks, not any users' tasks lol
+        
+        return render_template("user.html", user = session["user"], tasks = Task.query.filter_by(user=user).all())
     else:
         flash("To edit this account, you need to log in first.", "info")
         return redirect(url_for("login"))
