@@ -4,27 +4,28 @@
 {% block add_status %}active{% endblock %}
 {% block login_status %}{% endblock %}
 {% block content %}
-<form action = "#" method = "POST">
-    <div class="form-group, col-12">
-      <label for="title">Task name</label>
-      <input type="text" name = "title" class="form-control" id="title" placeholder="Enter task name...">
-    </div>
-    <div class="form-group, col-12">
-        <label for="description">Task description</label>
-        <textarea class="form-control" name = "description" id="description" rows="3"></textarea>
-    </div>
-    <div class="form-group, col-12">
-        <label for="description">Sub-task</label>
-        <input type="text" class="form-control" name = "checklist_item" id="checklist_item" placeholder="Enter sub-task...">
-    </div>
-    <div class="form-group, col-12">
-        <label for="description">Due date</label>
-        <input type="date" class="form-control" name = "due_date" id="due_date">
-    </div>
+<div class="container">
+    <form action="#" method="POST">
+        <div class="form-group col-12">
+            <label for="title">Task name</label>
+            <input type="text" name="title" class="form-control" id="title" placeholder="Enter task name...">
+        </div>
+        <div class="form-group col-12">
+            <label for="description">Task description</label>
+            <textarea class="form-control" name="description" id="description" rows="3"></textarea>
+        </div>
+        <div class="form-group col-12">
+            <label for="checklist_item">Sub-task</label>
+            <input type="text" class="form-control" name="checklist_item" id="checklist_item" placeholder="Enter sub-task...">
+        </div>
+        <div class="form-group col-12">
+            <label for="due_date">Due date</label>
+            <input type="date" class="form-control" name="due_date" id="due_date">
+        </div>
+        <br>
+        <button type="submit" class="btn btn-primary">Submit</button>
+    </form> 
     <br>
-    <button type="submit" class="btn btn-primary">Submit</button>
-</form> <br>
-
-<a href="/">Cancel</a>
-<a href="/">Submit</a>
+    <a href="/">Return</a>
+</div>
 {% endblock %}
