@@ -21,6 +21,7 @@ class Task(db.Model):
     checklist_item = db.Column(db.String(100), default = None)
     due_date = db.Column(db.DateTime, default = None)
     completed = db.Column(db.Boolean, default = False)
+    account = db.Column(db.String(20), nullable = False) # matches user in "User" class
 
     def __init__(self, title, description, checklist_item, due_date, completed):
         self.title = title
@@ -32,7 +33,7 @@ class Task(db.Model):
 class User(db.Model):
     __tablename__ = 'Users'
     id = db.Column(db.Integer, primary_key = True)
-    user = db.Column(db.String(20), nullable = False)
+    user = db.Column(db.String(20), nullable = False) # matches account_name in "Task" class
     email = db.Column(db.String(100), nullable = False)
     password = db.Column(db.String(50), nullable = False)
 
@@ -51,7 +52,11 @@ def index():
     for task in Task.query.all():
         Task.query.delete()
     db.session.commit()
-    '''    
+
+    for user in User.query.all():
+        User.query.delete()
+    db.session.commit()
+    '''
     return render_template('index.html', tasks = Task.query.all())
 
 @app.route('/home')
@@ -75,34 +80,31 @@ def add_task():
     else:
         return render_template('add_task.html')
 
-@app.route("/view")
-def view():
-    return render_template("view.html", values=Task.query.all())
-
-@app.route("/view_users")
-def view_users():
-    return render_template("view_users.html", values=User.query.all())
-
-
 @app.route("/login", methods = ["GET", "POST"])
 def login():
     if request.method == "POST":
         session.permanent = True
         user = request.form["username"]
         password = request.form["password"]
-        if password == User.query.filter_by(user = user).first()[2]:
+
+        stored_user = User.query.filter_by(user = user).first()
+
+        if stored_user and stored_user.password == password:
             session["user"] = user
-            return redirect(url_for("user_page"))
+            return redirect(url_for("user_page", user = session["user"]))
         else:
             flash("The password you have entered does not match the password in our system.", "info")
             return render_template("login.html")
     else:
         if "user" in session:
-            return redirect(url_for("user_page"))
+            return redirect(url_for("user_page", user = session["user"]))
         return render_template("login.html")
 
 @app.route("/sign-up", methods = ["GET", "POST"])
 def signup():
+    if "user" in session:
+            return redirect(url_for("user_page", user = session["user"]))
+    
     if request.method == "POST":
         email = request.form["email"]
         user = request.form["username"]
@@ -114,21 +116,19 @@ def signup():
             new_user = User(user = user, email = email, password = password)
             db.session.add(new_user)
             db.session.commit()
-            return redirect(url_for("user_page"))
+            return redirect(url_for("user_page", user = session["user"]))
         else:
             flash("An account with this username already exists.", "info")
             return render_template("signup.html")
     else:
         return render_template("signup.html")
 
-@app.route("/user")
-def user_page():
+@app.route("/profile/<user>")
+def user_page(user):
     if "user" in session:
-        print("made it to the correct statement")
-        user = session["user"]
-        return render_template("user.html", user = user)
+        return render_template("user.html", user = session["user"])
     else:
-        print("made it to the incorrect statement")
+        flash("To edit this account, you need to log in first.", "info")
         return redirect(url_for("login"))
 
 @app.route("/logout")
@@ -137,6 +137,18 @@ def logout():
         flash("You have been logged out.", "info")
     session.pop("user", None)
     return redirect(url_for("login"))
+
+
+## FOR DEBUG USE
+@app.route("/view")
+def view():
+    return render_template("view.html", values=Task.query.all())
+
+@app.route("/view_users")
+def view_users():
+    return render_template("view_users.html", values=User.query.all())
+##################
+
 
 
 if __name__ == '__main__':
