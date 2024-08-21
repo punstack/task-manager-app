@@ -7,7 +7,7 @@ from datetime import datetime
 
 app = Flask(__name__)
 
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///tasks.db' # "tasks" table
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db' # "tasks" and "users" table
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
@@ -34,6 +34,9 @@ class User(db.Model):
     def __init__(self, user, password):
         self.user = user
         self.password = password
+
+with app.app_context():
+    db.create_all()
 
 @app.route('/')
 def index():
@@ -93,6 +96,7 @@ def logout():
 '''
 
 if __name__ == '__main__':
+    
     #db.create_all() #for some reason, running this code breaks the web app :(
     '''
     new_task = Task(title="Sample Task", description="This is a task")
