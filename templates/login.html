@@ -7,18 +7,18 @@
 <body class="text-center">
     <form class = "form-signin" action = "#" method = "POST">
         <div>
-            <img class="mb-4" src="UPDATE LOGO.img" alt="" width="72" height="72">
+            <img src="{{ url_for('static', filename = "task_manager_logo.png") }}" alt="Task Manager Logo" width="72" height="72">
             <h1 class="h3 mb-3 font-weight-normal">Log In</h1>
         </div>
         <div class="form-label-group text-left">
             <input type="text" id="username" name = "username" class="form-control" placeholder="" required autofocus>
             <label for="username">Username</label>
-          </div>
+        </div>
         
-          <div class="form-label-group text-left">
+        <div class="form-label-group text-left">
             <input type="password" id="password" name = "password" class="form-control" placeholder="" required>
             <label for="password">Password</label>
-          </div>
+        </div>
         <button class="btn btn-lg btn-primary btn-block" type="submit">Sign in</button>
     </form>
 </body>

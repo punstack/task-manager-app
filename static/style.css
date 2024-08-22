@@ -1,8 +1,15 @@
+$primary: purple;
+$danger: red;
+
 body {
     min-height: 100vh;
     display: flex;
     flex-direction: column;
     color: #000000
+}
+
+h1 {
+  color: #517EF7
 }
 
 main {
