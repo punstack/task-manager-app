@@ -9,6 +9,10 @@ h1 {
   color: #517EF7
 }
 
+p.flash_message {
+  color: #517EF7;
+}
+
 main {
     flex: 1;
 }

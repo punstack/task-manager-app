@@ -42,19 +42,29 @@
           <ul class="navbar-nav mr-auto">
             <li class="nav-item">
               <a class="nav-link {% block home_status %}{% endblock %}" href="/">Home</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link {% block add_status %}{% endblock %}" href="/add-task">Add Task</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link {% block login_status %}{% endblock %}" href="/login">Login</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link {% block signup_status %}{% endblock %}" href="/sign-up">Sign Up</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="/logout">Log Out</a>
-            </li>
+            </li>  
+                     
+            {% if session.get("user") %}
+              <li class="nav-item">
+                <a class="nav-link {% block add_status %}{% endblock %}" href="/add-task">Add Task</a>
+              </li>
+
+              <li class="nav-item">
+                <a class="nav-link" href="{{url_for("user_page", user = session["user"])}}">My Profile</a>
+              </li>
+
+              <li class="nav-item">
+                <a class="nav-link" href="/logout">Log Out</a>
+              </li>
+            {% else %}
+              <li class="nav-item">
+                <a class="nav-link {% block login_status %}{% endblock %}" href="/login">Login</a>
+              </li>
+              
+              <li class="nav-item">
+                <a class="nav-link {% block signup_status %}{% endblock %}" href="/sign-up">Sign Up</a>
+              </li>
+            {% endif %}
           </ul>
         </div>
     </nav>
@@ -62,6 +72,16 @@
 
     <main class="flex-shrink-0">
       <div class="container">
+        {% with messages = get_flashed_messages() %}
+          {% if messages %}
+            <ul class=flashes>
+            {% for message in messages %}
+              <p class = flash_message>{{ message }}</p>
+            {% endfor %}
+            </ul>
+          {% endif %}
+        {% endwith %}
+        
         {% block content %}
         {% endblock %}
       </div>

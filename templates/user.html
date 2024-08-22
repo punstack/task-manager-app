@@ -1,6 +1,7 @@
 {% extends "layout.html" %}
+{% block title %}Task Manager - {{ user }}{% endblock %}
 {% block content %}
-<p>Welcome, {{ user }}!</p>
+<p>{{ user }}'s Tasks</p>
 <ul>
   {% for task in tasks %}
     <li>{{ task.title }} - {{ 'Completed' if task.completed else 'Pending' }}</li>

@@ -67,11 +67,8 @@ def index():
         User.query.delete()
     db.session.commit()
     '''
-    return render_template('index.html')
 
-@app.route('/home')
-def home():
-    return render_template('home.html', tasks = Task.query.all())
+    return render_template('index.html')
 
 @app.route('/add-task', methods = ["GET", "POST"])
 def add_task():
@@ -103,10 +100,10 @@ def login():
         return redirect(url_for("user_page", user = session["user"]))
     
     if request.method == "POST":
-        user = request.form["username"]
+        user = request.form["username"].lower()
         password = request.form["password"]
 
-        stored_user = User.query.filter_by(user = user).first() # this should be False if new user, True if existing user
+        stored_user = User.query.filter_by(user = user.lower()).first() # this should be False if new user, True if existing user
 
         if stored_user and check_password_hash(stored_user.password, password):
             print("the if statement won")
@@ -116,7 +113,7 @@ def login():
         else:
             print("the else statement won")
             # TODO: fix flash statements
-            flash("The password you have entered does not match the password in our system.", "info")
+            flash("The credentials you have entered do not match our system.", "error")
             return render_template("login.html")
     else:
         return render_template("login.html")
@@ -134,7 +131,7 @@ def signup():
         stored_user = User.query.filter_by(user = user).first() # this should be False if new user, True if existing user
 
         if stored_user:
-            flash("An account with this username already exists.", "info")
+            flash("An account with this username already exists. Please log in.", "info")
             return render_template("signup.html")
         else:
             session['user'] = user
@@ -147,23 +144,30 @@ def signup():
         return render_template("signup.html")
 
 @app.route("/<user>")
-def user_page(user):
+def user_page(user):    
     if "user" in session:
-        #TODO: make sure that, when a user is in session, they can only view THEIR tasks, not any users' tasks lol
-        
-        return render_template("user.html", user = session["user"], tasks = Task.query.filter_by(user=user).all())
+        print("Made it in session!")
+        logged_in_user = session["user"]
+
+        if user != logged_in_user:
+            print("Am not logged in user!")
+            return render_template("user.html", user = user, tasks = Task.query.filter_by(user=user).all())
+        else:
+            print("Logged in user!")
+            return render_template("user.html", user = logged_in_user, tasks = Task.query.filter_by(user=logged_in_user).all())
     else:
-        flash("To edit this account, you need to log in first.", "info")
+        flash("To view profiles, you need to log in first.", "info")
         return redirect(url_for("login"))
 
 @app.route("/logout")
 def logout():
     if "user" in session:
         flash("You have been logged out.", "info")
-    session.pop("user", None)
+        session.pop("user", None)   
     return redirect(url_for("login"))
 
 #### FOR DEBUG USE
+
 @app.route("/view")
 def view():
     return render_template("view.html", values=Task.query.all())
