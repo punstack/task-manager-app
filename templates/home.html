@@ -1,4 +1,10 @@
 {% extends "layout.html" %}
+
+{% block home_status %}active{% endblock %}
+{% block add_status %}{% endblock %}
+{% block login_status %}{% endblock %}
+{% block signup_status %}{% endblock %}
+
 {% block content %}
 <ul>
   {% for task in tasks %}

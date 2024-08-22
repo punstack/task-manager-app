@@ -1,5 +1,6 @@
 # python -m venv .venv
-# source  .venv/Scripts/activate
+# .venv/Scripts/activate
+# https://getbootstrap.com/docs/4.3/getting-started/introduction/
 
 from flask import Flask, render_template, redirect, request, url_for, session, flash
 from flask_sqlalchemy import SQLAlchemy
@@ -26,7 +27,7 @@ class Task(db.Model):
     title = db.Column(db.String(100), nullable = False)
     description = db.Column(db.String(200), default = None)
     checklist_item = db.Column(db.String(100), default = None)
-    due_date = db.Column(db.DateTime, default = None)
+    due_date = db.Column(db.Date, default = None)
     completed = db.Column(db.Boolean, default = False)
     user = db.Column(db.String(20), nullable = False) # matches user in "User" class
 
@@ -91,14 +92,15 @@ def add_task():
         new_task = Task(title = title, description = description, checklist_item = checklist_item, due_date = due_date, completed = False, user = user)
         db.session.add(new_task)
         db.session.commit()
-        return redirect('/')
+        return redirect(url_for("user_page", user = session["user"]))
     else:
         return render_template('add_task.html')
 
 @app.route("/login", methods = ["GET", "POST"])
 def login():
+    
     if "user" in session:
-            return redirect(url_for("user_page", user = session["user"]))
+        return redirect(url_for("user_page", user = session["user"]))
     
     if request.method == "POST":
         user = request.form["username"]
@@ -113,6 +115,7 @@ def login():
             return redirect(url_for("user_page", user = session["user"]))
         else:
             print("the else statement won")
+            # TODO: fix flash statements
             flash("The password you have entered does not match the password in our system.", "info")
             return render_template("login.html")
     else:

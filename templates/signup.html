@@ -1,8 +1,13 @@
 {% extends "layout.html" %}
 {% block title %}Task Manager - Sign Up{% endblock %}
+
+{% block home_status %}{% endblock %}
+{% block add_status %}{% endblock %}
+{% block login_status %}{% endblock %}
+{% block signup_status %}active{% endblock %}
+
 {% block content %}
 <body class="text-center">
-
     <form class = "form-signin" action = "#" method = "POST">
         <div>
             <h1 class="h3 mb-3 font-weight-normal">Sign Up</h1>
@@ -24,6 +29,7 @@
             <input type="password" id="password" name = "password" class="form-control" placeholder="" required>
             <label for="password">Password</label>
         </div>
+        
         <button class="btn btn-lg btn-primary btn-block" type="submit">Sign Up</button>
     </form>
 

@@ -116,3 +116,64 @@ main {
     color: #777;
   }
 }
+
+/* ADDED FOR TEXTAREA INPUT IN ADD_TASK.HTML */
+.form-label-group > textarea,
+.form-label-group > label {
+  height: 6.25rem;
+  padding: .75rem;
+}
+
+.form-label-group textarea::-webkit-input-placeholder {
+  color: transparent;
+}
+
+.form-label-group textarea:-ms-input-placeholder {
+  color: transparent;
+}
+
+.form-label-group textarea::-ms-input-placeholder {
+  color: transparent;
+}
+
+.form-label-group textarea::-moz-placeholder {
+  color: transparent;
+}
+
+.form-label-group textarea::placeholder {
+  color: transparent;
+}
+
+.form-label-group textarea:not(:placeholder-shown) {
+  padding-top: 1.25rem;
+  padding-bottom: .25rem;
+}
+
+.form-label-group textarea:not(:placeholder-shown) ~ label {
+  padding-top: .25rem;
+  padding-bottom: .25rem;
+  font-size: 12px;
+  color: #777;
+}
+
+/* Fallback for Edge
+-------------------------------------------------- */
+@supports (-ms-ime-align: auto) {
+  .form-label-group > label {
+    display: none;
+  }
+  .form-label-group textarea::-ms-input-placeholder {
+    color: #777;
+  }
+}
+
+/* Fallback for IE
+-------------------------------------------------- */
+@media all and (-ms-high-contrast: none), (-ms-high-contrast: active) {
+  .form-label-group > label {
+    display: none;
+  }
+  .form-label-group textarea:-ms-input-placeholder {
+    color: #777;
+  }
+}

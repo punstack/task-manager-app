@@ -1,28 +1,54 @@
 {% extends "layout.html" %}
 {% block title %}Task Manager - Add Task{% endblock %}
+
+{% block home_status %}{% endblock %}
+{% block add_status %}active{% endblock %}
+{% block login_status %}{% endblock %}
+{% block signup_status %}{% endblock %}
+
 {% block content %}
 <div class="container">
-    <form action="#" method="POST">
-        <div class="form-group col-12">
-            <label for="title">Task name</label>
-            <input type="text" name="title" class="form-control" id="title" placeholder="Enter task name...">
+    <form class = "form-signin" action="#" method="POST">
+        <div>
+            <h1 class="h3 mb-3 font-weight-normal text-center">Add Task</h1>
         </div>
-        <div class="form-group col-12">
-            <label for="description">Task description</label>
-            <textarea class="form-control" name="description" id="description" rows="3"></textarea>
+
+        <div class="form-label-group col-12 text-left">
+            <input type="text" name="title" class="form-control" id="title" placeholder="" required autofocus>
+            <label for="title">Task Name</label>
         </div>
-        <div class="form-group col-12">
-            <label for="checklist_item">Sub-task</label>
-            <input type="text" class="form-control" name="checklist_item" id="checklist_item" placeholder="Enter sub-task...">
+
+        <div class="form-label-group col-12 text-left">
+            <textarea type="text" name="description" class="form-control" id="description" placeholder="" rows="3"></textarea>
+            <label for="description">Task Description</label>
         </div>
-        <div class="form-group col-12">
-            <label for="due_date">Due date</label>
+
+        <div class="form-label-group col-12 text-left">
+            <input type="text" class="form-control" name="checklist_item" id="checklist_item" placeholder="">
+            <label for="checklist_item">Sub-Task</label>
+        </div>
+
+        <div class="form-label-group col-12 text-left">
             <input type="date" class="form-control" name="due_date" id="due_date">
+            <label for="due_date">Due Date</label>
+        </div><br>
+        
+        <div class="container">
+            <div class ="row">
+                <div class="col-sm text-center">
+                    <a href="{{ url_for("user_page", user = session["user"]) }}"><button type="button" class="btn btn-secondary">Cancel</button></a>
+                </div>
+                <div class="col-sm text-center">
+                    <button type="reset" class="btn btn-primary">Clear Form</button>
+                </div>
+                <div class="col-sm text-center">
+                    <button type="submit" class="btn btn-primary">Submit</button>
+                </div>
+            </div>
         </div>
-        <br>
-        <button type="submit" class="btn btn-primary">Submit</button>
+        
     </form> 
     <br>
-    <a href="/">Return</a>
+    
 </div>
 {% endblock %}
