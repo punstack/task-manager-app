@@ -32,7 +32,7 @@ class Task(db.Model):
     user = db.Column(db.String(20), nullable = False) # matches user in "User" class
 
     def __init__(self, title, description, checklist_item, due_date, completed, user):
-        self.title = title
+        self.title = title  
         self.description = description
         self.checklist_item = checklist_item
         self.due_date = due_date
@@ -106,13 +106,10 @@ def login():
         stored_user = User.query.filter_by(user = user.lower()).first() # this should be False if new user, True if existing user
 
         if stored_user and check_password_hash(stored_user.password, password):
-            print("the if statement won")
             session.permanent = True
             session["user"] = user
             return redirect(url_for("user_page", user = session["user"]))
         else:
-            print("the else statement won")
-            # TODO: fix flash statements
             flash("The credentials you have entered do not match our system.", "error")
             return render_template("login.html")
     else:
@@ -146,14 +143,10 @@ def signup():
 @app.route("/<user>")
 def user_page(user):    
     if "user" in session:
-        print("Made it in session!")
         logged_in_user = session["user"]
-
         if user != logged_in_user:
-            print("Am not logged in user!")
             return render_template("user.html", user = user, tasks = Task.query.filter_by(user=user).all())
         else:
-            print("Logged in user!")
             return render_template("user.html", user = logged_in_user, tasks = Task.query.filter_by(user=logged_in_user).all())
     else:
         flash("To view profiles, you need to log in first.", "info")
