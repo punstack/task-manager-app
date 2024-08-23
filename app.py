@@ -29,26 +29,30 @@ class Task(db.Model):
     checklist_item = db.Column(db.String(100), default = None)
     due_date = db.Column(db.Date, default = None)
     completed = db.Column(db.Boolean, default = False)
-    user = db.Column(db.String(20), nullable = False) # matches user in "User" class
+    user_lower = db.Column(db.String(20), nullable = False) # matches user_lower in "User" class
 
-    def __init__(self, title, description, checklist_item, due_date, completed, user):
+    def __init__(self, title, description, checklist_item, due_date, completed, user_lower):
         self.title = title  
         self.description = description
         self.checklist_item = checklist_item
         self.due_date = due_date
         self.completed = completed
-        self.user = user
+        self.user_lower = user_lower
 
 class User(db.Model):
     __tablename__ = 'User'
     id = db.Column(db.Integer, primary_key = True)
-    user = db.Column(db.String(20), nullable = False) # matches user in "Task" class
-    email = db.Column(db.String(100), nullable = False)
+    user = db.Column(db.String(20), unique = True, nullable = False) # stores original case of username
+    user_lower = db.Column(db.String(20), unique = True, nullable = False) # stores lower case version of username
+    email = db.Column(db.String(100), unique = True, nullable = False)
+    email_lower = db.Column(db.String(100), unique = True, nullable = False)
     password = db.Column(db.String(50), nullable = False)
 
     def __init__(self, user, email, password):
         self.user = user
+        self.user_lower = user.lower()
         self.email = email
+        self.email_lower = email.lower()
         self.password = password
 
 with app.app_context():
@@ -95,19 +99,18 @@ def add_task():
 
 @app.route("/login", methods = ["GET", "POST"])
 def login():
-    
     if "user" in session:
         return redirect(url_for("user_page", user = session["user"]))
     
     if request.method == "POST":
-        user = request.form["username"].lower()
+        user = request.form["username"]
         password = request.form["password"]
 
-        stored_user = User.query.filter_by(user = user.lower()).first() # this should be False if new user, True if existing user
+        stored_user = User.query.filter_by(user_lower = user.lower()).first() # this should be False if new user, True if existing user
 
         if stored_user and check_password_hash(stored_user.password, password):
             session.permanent = True
-            session["user"] = user
+            session["user"] = stored_user.user # stores the orignal case in session
             return redirect(url_for("user_page", user = session["user"]))
         else:
             flash("The credentials you have entered do not match our system.", "error")
@@ -125,8 +128,12 @@ def signup():
         user = request.form["username"]
         password = request.form["password"]
 
-        stored_user = User.query.filter_by(user = user).first() # this should be False if new user, True if existing user
-
+        stored_user = User.query.filter_by(user_lower = user.lower()).first() # this should be False if new user, True if existing user
+        stored_email = User.query.filter_by(email_lower = email.lower()).first()
+        
+        if stored_email:
+            flash("An account with this email already exists. Please log in.", "info")
+            return render_template("signup.html")
         if stored_user:
             flash("An account with this username already exists. Please log in.", "info")
             return render_template("signup.html")
@@ -144,10 +151,10 @@ def signup():
 def user_page(user):    
     if "user" in session:
         logged_in_user = session["user"]
-        if user != logged_in_user:
-            return render_template("user.html", user = user, tasks = Task.query.filter_by(user=user).all())
+        if user.lower() != logged_in_user.lower():
+            return render_template("user.html", user = user, tasks = Task.query.filter_by(user_lower=user.lower()).all())
         else:
-            return render_template("user.html", user = logged_in_user, tasks = Task.query.filter_by(user=logged_in_user).all())
+            return render_template("user.html", user = logged_in_user, tasks = Task.query.filter_by(user_lower=logged_in_user.lower()).all())
     else:
         flash("To view profiles, you need to log in first.", "info")
         return redirect(url_for("login"))
@@ -168,7 +175,24 @@ def view():
 @app.route("/view_users")
 def view_users():
     return render_template("view_users.html", values=User.query.all())
+
+@app.route("/settings")
+def settings():
+    if "user" in session:
+        user = session["user"]
+        stored_user = User.query.filter_by(user_lower = user.lower()).first()
+    return render_template("settings.html", email = stored_user.email, user = user)
 ##################
 
 if __name__ == '__main__':
     app.run(debug=True)
+
+#TO-DO: should the web app have a social feature (friends/following/followers)?
+#TO-DO: how would users see other peoples' tasks? HOW is there a social element in a task managing app?
+#TO-DO: fix up home page to be pretty :)
+#TO-DO: fix up my profile to be pretty
+#TO-DO: add "completed" and "remove" buttons for all tasks
+#TO-DO: add a session-user specific settings page that allows them to change email address, username, or password
+#TO-DO: implement checking for used usernames
+#TO-DO: implement password protection (eg. 8-24 characters, one number, one uppercase letter... doesn't have to be so specific)
+#TO-DO: this is for later if this ever goes to prod, but add a "forgot password?" button linked to an email with a password reset OR a randomly generated password. not sure which is cooler

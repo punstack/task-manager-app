@@ -34,11 +34,95 @@ main {
 
 .form-signin {
   width: 100%;
-  max-width: 420px;
+  max-width: 500px;
   padding: 15px;
   margin: auto;
 }
 
+/* FOR SETTINGS PAGE */
+.form-settings {
+  position: relative;
+  width: 100%;
+  max-width: 800px;
+  padding: 15px;
+  margin: auto;
+}
+
+.form-settings > input,
+.form-settings > label {
+  height: 3.125rem;
+  padding: .75rem;
+}
+
+.form-settings > label {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  display: block;
+  width: 100%;
+  line-height: 1.5;
+  color: #495057;
+  pointer-events: none;
+  cursor: text; /* Match the input under the label */
+  border: 1px solid transparent;
+  border-radius: .25rem;
+  transition: all .1s ease-in-out;
+  text-align: left;
+}
+
+.form-settings input::-webkit-input-placeholder {
+  color: #777;
+}
+
+.form-settings input:-ms-input-placeholder {
+  color: #777;
+}
+
+.form-settings input::-ms-input-placeholder {
+  color: #777;
+}
+
+.form-settings input::-moz-placeholder {
+  color: #777;
+}
+
+.form-settings input::placeholder {
+  color: #777;
+}
+
+.form-settings input:not(:placeholder-shown) {
+  padding-top: 1.25rem;
+  padding-bottom: .25rem;
+}
+
+.form-settings input:not(:placeholder-shown) ~ label {
+  padding-top: .25rem;
+  padding-bottom: .25rem;
+  font-size: 12px;
+  color: #777;
+}
+
+@supports (-ms-ime-align: auto) {
+  .form-settings > label {
+    display: none;
+  }
+  .form-settings input::-ms-input-placeholder {
+    color: #777;
+  }
+}
+
+@media all and (-ms-high-contrast: none), (-ms-high-contrast: active) {
+  .form-settings > label {
+    display: none;
+  }
+  .form-settings input:-ms-input-placeholder {
+    color: #777;
+  }
+}
+
+/**************************************/
+
+/* FOR FLOATING TEXT WITH INPUT BOXES */
 .form-label-group {
   position: relative;
   margin-bottom: 1rem;

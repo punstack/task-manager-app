@@ -50,7 +50,11 @@
               </li>
 
               <li class="nav-item">
-                <a class="nav-link" href="{{url_for("user_page", user = session["user"])}}">My Profile</a>
+                <a class="nav-link {% block user_status %}{% endblock %}" href="{{url_for("user_page", user = session["user"])}}">My Profile</a>
+              </li>
+
+              <li class="nav-item">
+                <a class="nav-link {% block settings_status %}{% endblock %}" href="/settings">Settings</a>
               </li>
 
               <li class="nav-item">

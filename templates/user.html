@@ -1,5 +1,11 @@
 {% extends "layout.html" %}
 {% block title %}Task Manager - {{ user }}{% endblock %}
+
+{% block home_status %}{% endblock %}
+{% block user_status %}active{% endblock %}
+{% block settings_status %}{% endblock %}
+{% block add_status %}{% endblock %}
+
 {% block content %}
 <p>{{ user }}'s Tasks</p>
 <ul>
