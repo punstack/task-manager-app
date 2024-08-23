@@ -23,9 +23,9 @@
         {% if task.due_date %}
         <span class="task-due-date">{{ task.due_date }}</span><br>
         {% endif %}
-        {% for subtask in tasks.subtasks %}
-        <input type="checkbox" class="subtask-checkbox" onclick="toggleSubtaskCompletiion({{ subtask.id }})" {% if subtask.completed %}checked{% endif %}>
-        <span class="subtask">{{ subtask.title }}</span>
+        {% for subtask in task.subtasks %}
+        <input type="checkbox" class="subtask-checkbox" onclick="updateSubtaskStatus(this, {{ subtask.id }})" {% if subtask.completed %}checked{% endif %}>
+        <span class="subtask-name">{{ subtask.title }}</span><br>
         {% endfor %}
       </div>
     </div>
@@ -35,7 +35,7 @@
 
 <script>
   function updateTaskStatus(checkbox, taskId) {
-    fetch(`/update-task-status/${taskId}`, {
+    fetch(`/update-task/${taskId}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -52,8 +52,8 @@
     });
   }
 
-  function toggleSubtaskCompletion(subtaskId) {
-    fetch(`/toggle-subtask/${subtaskId}`, {
+  function updateSubtaskStatus(checkbox, subtaskId) {
+    fetch(`/update-subtask/${subtaskId}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -62,9 +62,11 @@
     .then(response => response.json())
     .then(data => {
       if (data.success) {
-        checkbox.parentElement.querySelector('.task-name').style.textDecoration = data.completed ? 'line-through' : 'none';
+        // Update the text decoration of the sibling span
+        var subtaskName = checkbox.nextElementSibling;
+        subtaskName.style.textDecoration = data.completed ? 'line-through' : 'none';
       } else {
-        alert("Failed to update task status.");
+        alert("Failed to update subtask status.");
       }
     });
   }

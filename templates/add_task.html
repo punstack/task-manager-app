@@ -31,11 +31,12 @@
         <div id="subtask_field">
             <div class="content" id="wrapper"> 
                 <div class="form-label-group text-left">
-                    <input type="text" class="form-control" name="subtask" id="subtask" placeholder="">
+                    <input type="text" class="form-control" name="subtask[]" id="subtask" placeholder="">
                     <label for="subtask">Sub-Task</label>
                 </div>
             </div>
         </div>
+
         <div class="container">
             <div class="row">
                 <div class="col-sm text-center">
@@ -68,10 +69,7 @@
                 </div>
             </div>
         </div>
-
     </form>
-    <br>
-
 </div>
 
 <script>
@@ -80,7 +78,7 @@
         var newSubtask = document.createElement('div');
         newSubtask.className = 'form-label-group text-left';
         newSubtask.innerHTML = 
-            '<input type="text" class="form-control" name="subtask" placeholder="">' +
+            '<input type="text" class="form-control" name="subtask[]" placeholder="">' +
             '<label for="subtask">Sub-Task</label>';
         wrapper.appendChild(newSubtask);
     }

@@ -27,13 +27,11 @@ class Subtask(db.Model):
     __tablename__ = 'Subtask'
     id = db.Column(db.Integer, primary_key = True)
     title = db.Column(db.String(100), default = None)
-    description = db.Column(db.String(200), default = None)
     completed = db.Column(db.Boolean, default = False)
     task_id = db.Column(db.Integer, db.ForeignKey('Task.id'), nullable = False)
 
-    def __init__(self, title, description, completed, task_id):
+    def __init__(self, title, completed, task_id):
         self.title = title  
-        self.description = description
         self.completed = completed
         self.task_id = task_id
 
@@ -103,30 +101,36 @@ def add_task():
     if request.method == "POST":
         title = request.form["title"]
         description = request.form["description"] # else None (except it just says "")
-        subtask = request.form["subtask"] # else None (except it just says "")
-        due_date = request.form["due_date"] # else None # prints as YYYY-MM-DD
+        subtasks = request.form.getlist("subtask[]") # else None (except it just says "")
+        due_date = request.form.get("due_date") # else None # prints as YYYY-MM-DD
+        
         try:
             if type(due_date) is str:
                 due_date = datetime.strptime(due_date, '%Y-%m-%d')
         except:
             due_date = None
+
         if "user" in session:
             user = session["user"].lower()
         else:
             user = None
         new_task = Task(title = title, description = description, due_date = due_date, completed = False, user_lower = user)
-        ############# NEED TO UPDATE NEW_SUBTASK
-        new_subtask = Subtask(title = subtask, description = None, completed = False, task_id = new_task.id)
         db.session.add(new_task)
-        db.session.add(new_subtask)
+        db.session.flush()
+
+        for subtask in subtasks:
+            if subtask.strip():
+                new_subtask = Subtask(title=subtask, completed = False, task_id = new_task.id)
+                db.session.add(new_subtask)
         db.session.commit()
+        
         return redirect(url_for("user_page", user = session["user"]))
     else:
         return render_template('add_task.html')
 
 
-@app.route('/update-task-status/<int:task_id>', methods=['POST'])
-def update_task_status(task_id):
+@app.route('/update-task/<int:task_id>', methods=['POST'])
+def update_task(task_id):
     task = Task.query.get(task_id)
     if task:
         task.completed = not task.completed  # toggle the status
@@ -134,8 +138,8 @@ def update_task_status(task_id):
         return {"success": True, "completed": task.completed}
     return {"success": False}, 404
 
-@app.route('/toggle-subtask/<int:subtask_id>', methods=['POST'])
-def toggle_subtask_completion(subtask_id):
+@app.route('/update-subtask/<int:subtask_id>', methods=['POST'])
+def update_subtask(subtask_id):
     subtask = Subtask.query.get_or_404(subtask_id)
     if subtask:
         subtask.completed = not subtask.completed
