@@ -39,6 +39,33 @@ main {
   margin: auto;
 }
 
+/* FOR TASK VIEW */
+.task {
+  margin-bottom: 20px;
+  color: black;
+}
+
+.task-name {
+  font-weight: bold;
+  margin-left: 5px;
+}
+
+.task-details {
+  margin-left: 20px;
+}
+
+.task-due-date {
+  color: red;
+}
+
+.subtask-checkbox {
+  margin-top: 10px;
+}
+
+.subtask {
+  margin-left: 5px;
+}
+
 /* FOR SETTINGS PAGE */
 .form-settings {
   position: relative;

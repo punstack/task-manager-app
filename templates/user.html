@@ -7,23 +7,51 @@
 {% block add_status %}{% endblock %}
 
 {% block content %}
-<p>{{ user }}'s Tasks</p>
-<ul>
+<div class="position-relative m-md-3">
+  <div>
+    <h1 class="h3 mb-3 display-4 font-weight-normal text-center">{{ user }}'s Tasks</h1>
+  </div>
   {% for task in tasks %}
-  <li>{{ task.title }} - {{ 'Completed' if task.completed else 'Pending' }}</li>
-  <ul>
-    {% if task.checklist_item %}
-    <li>{{ task.checklist_item }}</li>
-    {% endif %}
-  </ul>
-  {% if task.description %}
-  <li>{{ task.description }}</li>
-  {% endif %}
-  {% if task.due_date %}
-  <li>{{ task.due_date }}</li>
-  {% endif %}
-  <br>
-  {% endfor %}
-</ul>
-<a href="/add-task">Add a new task</a>
+  <span {% if task.completed %} style="text-decoration: line-through" {% endif %}>
+    <div class="task">
+      <input type="checkbox" class="task-checkbox" {% if task.completed %}checked{% endif %} onclick="updateTaskStatus(this, {{ task.id }})">
+      <span class="task-name">{{ task.title}}</span>
+      <div class="task-details">
+        {% if task.description %}
+        <span class="task-description">{{ task.description }}</span><br>
+        {% endif %}
+        {% if task.due_date %}
+        <span class="task-due-date">{{ task.due_date }}</span><br>
+        {% endif %}
+        {% if task.checklist_item %}
+        <!-- need to edit removeSubTask -- working on implementing new datatable for subtasks -->
+        <input type="checkbox" class="subtask-checkbox" onclick="removeSubTask(this)">
+        <span class="subtask">{{ task.checklist_item }}</span>
+        {% endif %}
+      </div>
+    </div>
+  </span>
+  {% endfor %} 
+</div>
+
+<script>
+  function updateTaskStatus(checkbox, taskId) {
+    fetch(`/update-task-status/${taskId}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        checkbox.parentElement.querySelector('.task-name').style.textDecoration = data.completed ? 'line-through' : 'none';
+        checkbox.parentElement.style.textDecoration = data.completed ? 'line-through' : 'none';
+
+      } else {
+        alert("Failed to update task status.");
+      }
+    });
+  }
+</script> 
 {% endblock %}

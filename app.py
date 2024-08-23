@@ -68,7 +68,6 @@ def check_user_existence():
             flash("Your account no longer exists. Please log in again.", "error")
             return redirect(url_for("login"))
 
-
 @app.route('/')
 def index():
     # remove all entries in the database
@@ -107,6 +106,16 @@ def add_task():
     else:
         return render_template('add_task.html')
 
+
+@app.route('/update-task-status/<int:task_id>', methods=['POST'])
+def update_task_status(task_id):
+    task = Task.query.get(task_id)
+    if task:
+        task.completed = not task.completed  # Toggle the status
+        db.session.commit()
+        return {"success": True, "completed": task.completed}
+    return {"success": False}, 404
+
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if "user" in session:
@@ -128,7 +137,6 @@ def login():
             return render_template("login.html")
     else:
         return render_template("login.html")
-
 
 @app.route("/sign-up", methods = ["GET", "POST"])
 def signup():
@@ -185,24 +193,6 @@ def user_page(user):
     flash("To view profiles, you need to log in first.", "info")
     return redirect(url_for("login"))
 
-
-@app.route("/logout")
-def logout():
-    if "user" in session:
-        flash("You have been logged out.", "info")
-        session.pop("user", None)   
-    return redirect(url_for("login"))
-
-#### FOR DEBUG USE
-
-@app.route("/view")
-def view():
-    return render_template("view.html", values=Task.query.all())
-
-@app.route("/view_users")
-def view_users():
-    return render_template("view_users.html", values=User.query.all())
-
 @app.route("/settings", methods=["GET", "POST"])
 def settings():
     if "user" in session:
@@ -248,7 +238,22 @@ def settings():
     flash("You need to log in first.", "error")
     return redirect(url_for("login"))
 
-##################
+@app.route("/logout")
+def logout():
+    if "user" in session:
+        flash("You have been logged out.", "info")
+        session.pop("user", None)   
+    return redirect(url_for("login"))
+
+#### FOR DEBUG USE
+
+@app.route("/view")
+def view():
+    return render_template("view.html", values=Task.query.all())
+
+@app.route("/view_users")
+def view_users():
+    return render_template("view_users.html", values=User.query.all())
 
 if __name__ == '__main__':
     app.run(debug=True)
@@ -258,7 +263,6 @@ if __name__ == '__main__':
 #TO-DO: fix up home page to be pretty :)
 #TO-DO: fix up my profile to be pretty
 #TO-DO: add "completed" and "remove" buttons for all tasks
-#TO-DO: add a session-user specific settings page that allows them to change email address, username, or password
-#TO-DO: implement checking for used usernames
+#TO-DO: implement checking for used usernames (maybe in-page instead of on a refresh of the page)
 #TO-DO: implement password protection (eg. 8-24 characters, one number, one uppercase letter... doesn't have to be so specific)
 #TO-DO: this is for later if this ever goes to prod, but add a "forgot password?" button linked to an email with a password reset OR a randomly generated password. not sure which is cooler
