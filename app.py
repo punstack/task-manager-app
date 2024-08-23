@@ -4,6 +4,8 @@
 
 from flask import Flask, render_template, redirect, request, url_for, session, flash
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import ForeignKey
+from sqlalchemy.orm import relationship
 from flask_migrate import Migrate
 from datetime import datetime, timedelta
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -21,20 +23,33 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 
+class Subtask(db.Model):
+    __tablename__ = 'Subtask'
+    id = db.Column(db.Integer, primary_key = True)
+    title = db.Column(db.String(100), default = None)
+    description = db.Column(db.String(200), default = None)
+    completed = db.Column(db.Boolean, default = False)
+    task_id = db.Column(db.Integer, db.ForeignKey('Task.id'), nullable = False)
+
+    def __init__(self, title, description, completed, task_id):
+        self.title = title  
+        self.description = description
+        self.completed = completed
+        self.task_id = task_id
+
 class Task(db.Model):
     __tablename__ = 'Task'
     id = db.Column(db.Integer, primary_key = True)
     title = db.Column(db.String(100), nullable = False)
     description = db.Column(db.String(200), default = None)
-    checklist_item = db.Column(db.String(100), default = None)
     due_date = db.Column(db.Date, default = None)
     completed = db.Column(db.Boolean, default = False)
     user_lower = db.Column(db.String(20), nullable = False) # matches user_lower in "User" class
+    subtasks = db.relationship('Subtask', backref='task', lazy = True)
 
-    def __init__(self, title, description, checklist_item, due_date, completed, user_lower):
+    def __init__(self, title, description, due_date, completed, user_lower):
         self.title = title  
         self.description = description
-        self.checklist_item = checklist_item
         self.due_date = due_date
         self.completed = completed
         self.user_lower = user_lower
@@ -88,7 +103,7 @@ def add_task():
     if request.method == "POST":
         title = request.form["title"]
         description = request.form["description"] # else None (except it just says "")
-        checklist_item = request.form["checklist_item"] # else None (except it just says "")
+        subtask = request.form["subtask"] # else None (except it just says "")
         due_date = request.form["due_date"] # else None # prints as YYYY-MM-DD
         try:
             if type(due_date) is str:
@@ -99,8 +114,11 @@ def add_task():
             user = session["user"].lower()
         else:
             user = None
-        new_task = Task(title = title, description = description, checklist_item = checklist_item, due_date = due_date, completed = False, user_lower = user)
+        new_task = Task(title = title, description = description, due_date = due_date, completed = False, user_lower = user)
+        ############# NEED TO UPDATE NEW_SUBTASK
+        new_subtask = Subtask(title = subtask, description = None, completed = False, task_id = new_task.id)
         db.session.add(new_task)
+        db.session.add(new_subtask)
         db.session.commit()
         return redirect(url_for("user_page", user = session["user"]))
     else:
@@ -111,9 +129,18 @@ def add_task():
 def update_task_status(task_id):
     task = Task.query.get(task_id)
     if task:
-        task.completed = not task.completed  # Toggle the status
+        task.completed = not task.completed  # toggle the status
         db.session.commit()
         return {"success": True, "completed": task.completed}
+    return {"success": False}, 404
+
+@app.route('/toggle-subtask/<int:subtask_id>', methods=['POST'])
+def toggle_subtask_completion(subtask_id):
+    subtask = Subtask.query.get_or_404(subtask_id)
+    if subtask:
+        subtask.completed = not subtask.completed
+        db.session.commit()
+        return {"success": True, "completed": subtask.completed}
     return {"success": False}, 404
 
 @app.route("/login", methods=["GET", "POST"])
@@ -181,14 +208,17 @@ def user_page(user):
 
         # if the logged-in user is viewing their own profile, use re-queried user data
         if user.lower() == stored_user.user_lower:
-            return render_template("user.html", user=stored_user.user, tasks=Task.query.filter_by(user_lower=stored_user.user_lower).all())
+            tasks_passed = Task.query.filter_by(user_lower=stored_user.user_lower).all()
+            return render_template("user.html", user=stored_user.user, tasks= tasks_passed)
         else:
             viewed_user = User.query.filter_by(user_lower=user.lower()).first()
             if viewed_user:
-                return render_template("user.html", user=viewed_user.user, tasks=Task.query.filter_by(user_lower=viewed_user.user_lower).all())
+                tasks_passed = Task.query.filter_by(user_lower=viewed_user.user_lower).all()
+                return render_template("user.html", user=viewed_user.user, tasks= tasks_passed)
             else:
                 flash("User not found.", "error")
-                return render_template("user.html", user=stored_user.user, tasks=Task.query.filter_by(user_lower=stored_user.user_lower).all())
+                tasks_passed = Task.query.filter_by(user_lower=stored_user.user_lower).all()
+                return render_template("user.html", user=stored_user.user, tasks= tasks_passed)
 
     flash("To view profiles, you need to log in first.", "info")
     return redirect(url_for("login"))
@@ -213,7 +243,7 @@ def settings():
             # update user details
             stored_user.user = new_username
             stored_user.email = new_email
-            stored_user.user_lower = new_username.lower()  # Ensure the lower case version is updated
+            stored_user.user_lower = new_username.lower() # ensure the lower case version is updated
 
             if len(new_password) > 0:
                 new_hashed_password = generate_password_hash(new_password, method="pbkdf2:sha256")
@@ -249,7 +279,7 @@ def logout():
 
 @app.route("/view")
 def view():
-    return render_template("view.html", values=Task.query.all())
+    return render_template("view.html", values=Task.query.all(), values2 = Subtask.query.all())
 
 @app.route("/view_users")
 def view_users():

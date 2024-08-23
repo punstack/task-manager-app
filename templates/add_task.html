@@ -1,6 +1,10 @@
 {% extends "layout.html" %}
 {% block title %}Task Manager - Add Task{% endblock %}
-
+<style>
+    .subtask-wrapper {
+        margin-bottom: 10px;
+    }
+</style>
 {% block home_status %}{% endblock %}
 {% block user_status %}{% endblock %}
 {% block settings_status %}{% endblock %}
@@ -15,7 +19,7 @@
 
         <div class="form-label-group text-left">
             <input type="text" name="title" class="form-control" id="title" placeholder="" required autofocus>
-            <label for="title">Task Name</label>
+            <label for="title">Task Name*</label>
         </div>
 
         <div class="form-label-group text-left">
@@ -23,12 +27,27 @@
                 rows="3"></textarea>
             <label for="description">Task Description</label>
         </div>
-
-        <div class="form-label-group text-left">
-            <input type="text" class="form-control" name="checklist_item" id="checklist_item" placeholder="">
-            <label for="checklist_item">Sub-Task</label>
+        
+        <div id="subtask_field">
+            <div class="content" id="wrapper"> 
+                <div class="form-label-group text-left">
+                    <input type="text" class="form-control" name="subtask" id="subtask" placeholder="">
+                    <label for="subtask">Sub-Task</label>
+                </div>
+            </div>
         </div>
-
+        <div class="container">
+            <div class="row">
+                <div class="col-sm text-center">
+                    <button type="button" class="btn btn-secondary" onclick="removeSubtaskFields();">Remove Subtask Field</button>
+                </div>
+                <div class="col-sm text-center">
+                    <button type="button" class="btn btn-primary" onclick="addSubtaskFields();">Add Subtask Field</button>
+                </div>
+            </div>
+        </div>       
+        <br>
+        <br>
         <div class="form-label-group text-left">
             <input type="date" class="form-control" name="due_date" id="due_date">
             <label for="due_date">Due Date</label>
@@ -54,4 +73,23 @@
     <br>
 
 </div>
+
+<script>
+    function addSubtaskFields() {
+        var wrapper = document.getElementById('wrapper');
+        var newSubtask = document.createElement('div');
+        newSubtask.className = 'form-label-group text-left';
+        newSubtask.innerHTML = 
+            '<input type="text" class="form-control" name="subtask" placeholder="">' +
+            '<label for="subtask">Sub-Task</label>';
+        wrapper.appendChild(newSubtask);
+    }
+
+    function removeSubtaskFields() {
+        var wrapper = document.getElementById('wrapper');
+        if (wrapper.children.length > 1) {
+            wrapper.removeChild(wrapper.lastChild);
+        }
+    }
+</script>
 {% endblock %}
