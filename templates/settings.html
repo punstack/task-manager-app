@@ -10,7 +10,7 @@
 
 <body class="text-center">
   <form class="form-inline" action="#" method="POST">
-    <div class = "container col-lg-7 col-lg-6">
+    <div class="container col-lg-7 col-lg-6">
       <h1 class="h3 mb-3 font-weight-normal">Settings</h1>
 
       <!-- Email Address Row -->
@@ -18,55 +18,55 @@
         <div class="row">
           <div class="col align-items-center">
             <div class="form-settings">
-              <input type="email" id="email" name="email" class="form-control" value="{{ email }}" autofocus readonly>
+              <input type="email" id="email" name="email" class="form-control" value="{{ email }}" autofocus>
               <label for="email">Email Address</label>
             </div>
           </div>
           <div class="col text-center align-self-center">
-            <button class="btn btn-secondary btn-md btn-block" type="button">Change Email</button>
+            <button class="btn btn-secondary btn-md btn-block" type="submit">Change Email</button>
           </div>
         </div>
 
         <!-- Username Row -->
         <div class="row">
           <div class="col align-items-center"">
-            <div class="form-settings">
-              <input type="text" id="username" name="username" class="form-control" value="{{ user }}" readonly>
-              <label for="username">Username</label>
-            </div>
-          </div>
-          <div class="col text-center align-self-center">
-            <button class="btn btn-secondary btn-md btn-block" type="button">Change Username</button>
+            <div class=" form-settings">
+            <input type="text" id="username" name="username" class="form-control" value="{{ user }}">
+            <label for="username">Username</label>
           </div>
         </div>
-
-        <!-- Password Row -->
-        <div class="row">
-          <div class="col align-items-center">
-            <div class="form-settings">
-              <input type="password" id="password" name="password" class="form-control" placeholder="" readonly>
-              <label for="password">Password</label>
-            </div>
-          </div>
-          <div class="col text-center align-self-center">
-            <button class="btn btn-secondary btn-md btn-block custom-btn" type="button">Change Password</button>
-          </div>
+        <div class="col text-center align-self-center">
+          <button class="btn btn-secondary btn-md btn-block" type="submit">Change Username</button>
         </div>
       </div>
 
-      <!-- Cancel and Update Buttons -->
-      <div class="container">
-        <div class="row">
-          <div class="col text-center">
-            <a href="{{ url_for("user_page", user=session["user"]) }}">
-              <button class="btn btn-secondary btn-block" type="button">Cancel</button>
-            </a>
-          </div>
-          <div class="col text-center">
-            <button class="btn btn-primary btn-block" type="submit">Update Account</button>
+      <!-- Password Row -->
+      <div class="row">
+        <div class="col align-items-center">
+          <div class="form-settings">
+            <input type="password" id="password" name="password" class="form-control" placeholder="">
+            <label for="password">Password</label>
           </div>
         </div>
+        <div class="col text-center align-self-center">
+          <button class="btn btn-secondary btn-md btn-block custom-btn" type="submit">Change Password</button>
+        </div>
       </div>
+    </div>
+
+    <!-- Cancel and Update Buttons -->
+    <div class="container">
+      <div class="row">
+        <div class="col text-center">
+          <a href="{{ url_for("user_page", user=session["user"]) }}">
+            <button class="btn btn-secondary btn-block" type="button">Cancel</button>
+          </a>
+        </div>
+        <div class="col text-center">
+          <button class="btn btn-primary btn-block" type="submit">Update Account</button>
+        </div>
+      </div>
+    </div>
     </div>
   </form>
 </body>
