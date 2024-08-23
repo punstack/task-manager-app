@@ -59,6 +59,16 @@ with app.app_context():
     #db.drop_all() # drop all tables // not necessary unless new columns are added to models
     db.create_all() # create tables based on models
 
+@app.before_request
+def check_user_existence():
+    if "user" in session:
+        user_lower = session["user"].lower()
+        if not User.query.filter_by(user_lower=user_lower).first():
+            session.pop("user", None)
+            flash("Your account no longer exists. Please log in again.", "error")
+            return redirect(url_for("login"))
+
+
 @app.route('/')
 def index():
     # remove all entries in the database
@@ -78,8 +88,8 @@ def index():
 def add_task():
     if request.method == "POST":
         title = request.form["title"]
-        description = request.form["description"] # else None
-        checklist_item = request.form["checklist_item"] # else None
+        description = request.form["description"] # else None (except it just says "")
+        checklist_item = request.form["checklist_item"] # else None (except it just says "")
         due_date = request.form["due_date"] # else None # prints as YYYY-MM-DD
         try:
             if type(due_date) is str:
@@ -87,36 +97,38 @@ def add_task():
         except:
             due_date = None
         if "user" in session:
-            user = session["user"]
+            user = session["user"].lower()
         else:
             user = None
-        new_task = Task(title = title, description = description, checklist_item = checklist_item, due_date = due_date, completed = False, user = user)
+        new_task = Task(title = title, description = description, checklist_item = checklist_item, due_date = due_date, completed = False, user_lower = user)
         db.session.add(new_task)
         db.session.commit()
         return redirect(url_for("user_page", user = session["user"]))
     else:
         return render_template('add_task.html')
 
-@app.route("/login", methods = ["GET", "POST"])
+@app.route("/login", methods=["GET", "POST"])
 def login():
     if "user" in session:
-        return redirect(url_for("user_page", user = session["user"]))
-    
+        return redirect(url_for("user_page", user=session["user"]))
+
     if request.method == "POST":
         user = request.form["username"]
         password = request.form["password"]
 
-        stored_user = User.query.filter_by(user_lower = user.lower()).first() # this should be False if new user, True if existing user
+        # query using lower-case username
+        stored_user = User.query.filter_by(user_lower=user.lower()).first()
 
         if stored_user and check_password_hash(stored_user.password, password):
             session.permanent = True
-            session["user"] = stored_user.user # stores the orignal case in session
-            return redirect(url_for("user_page", user = session["user"]))
+            session["user"] = stored_user.user  # store the original case in session
+            return redirect(url_for("user_page", user=stored_user.user))
         else:
             flash("The credentials you have entered do not match our system.", "error")
             return render_template("login.html")
     else:
         return render_template("login.html")
+
 
 @app.route("/sign-up", methods = ["GET", "POST"])
 def signup():
@@ -152,16 +164,14 @@ def user_page(user):
     if "user" in session:
         logged_in_user = session["user"]
 
-        # Re-query the logged-in user to ensure we have the latest data
+        # re-query logged-in user
         stored_user = User.query.filter_by(user_lower=logged_in_user.lower()).first()
-        '''
         if not stored_user:
-            print("User: ", session["user"])
             flash("Your account no longer exists. Please log in again.", "error")
             session.pop("user", None)
             return redirect(url_for("login"))
-        '''
-        # If the logged-in user is viewing their own profile, use the re-queried user data
+
+        # if the logged-in user is viewing their own profile, use re-queried user data
         if user.lower() == stored_user.user_lower:
             return render_template("user.html", user=stored_user.user, tasks=Task.query.filter_by(user_lower=stored_user.user_lower).all())
         else:
@@ -172,9 +182,8 @@ def user_page(user):
                 flash("User not found.", "error")
                 return render_template("user.html", user=stored_user.user, tasks=Task.query.filter_by(user_lower=stored_user.user_lower).all())
 
-    else:
-        flash("To view profiles, you need to log in first.", "info")
-        return redirect(url_for("login"))
+    flash("To view profiles, you need to log in first.", "info")
+    return redirect(url_for("login"))
 
 
 @app.route("/logout")
@@ -197,73 +206,48 @@ def view_users():
 @app.route("/settings", methods=["GET", "POST"])
 def settings():
     if "user" in session:
-        current_user = session["user"]
-        stored_user = User.query.filter_by(user_lower=current_user.lower()).first()
-
-        if stored_user is None:
-            flash("User not found. Please log in again.", "error")
-            return redirect(url_for("login"))
+        # fetch user using the session username
+        stored_user = User.query.filter_by(user_lower=session["user"].lower()).first()
 
         if request.method == "POST":
             new_email = request.form["email"]
             new_username = request.form["username"]
             new_password = request.form["password"]
 
-            # Check if the new username is already taken by another user
+            # check if the new username is already taken
             existing_user = User.query.filter_by(user_lower=new_username.lower()).first()
             if existing_user and existing_user.user_lower != stored_user.user_lower:
                 flash("Username already taken. Please choose a different username.", "error")
                 return render_template("settings.html", email=stored_user.email, user=session["user"])
 
-            # Update the user details
+            # update user details
             stored_user.user = new_username
             stored_user.email = new_email
+            stored_user.user_lower = new_username.lower()  # Ensure the lower case version is updated
 
-            if new_password:
+            if len(new_password) > 0:
                 new_hashed_password = generate_password_hash(new_password, method="pbkdf2:sha256")
                 stored_user.password = new_hashed_password
 
             try:
                 db.session.commit()
-
-                # Update the session with the new username
+                
+                # update session with new username
                 session["user"] = new_username
-
+                
                 flash("Your credentials have been updated.", "info")
+                return redirect(url_for("user_page", user=new_username))
 
             except Exception as e:
                 db.session.rollback()
                 flash(f"An error occurred: {str(e)}", "error")
-                return render_template("settings.html", email=stored_user.email, user=current_user)
+                return render_template("settings.html", email=stored_user.email, user=session["user"])
 
-        # Re-query the updated user data using the new username from the session
-        updated_user = User.query.filter_by(user_lower=stored_user.user_lower).first()
-        return render_template("settings.html", email=updated_user.email, user=updated_user.user)
+        return render_template("settings.html", email=stored_user.email, user=session["user"])
 
     flash("You need to log in first.", "error")
     return redirect(url_for("login"))
 
-##################
-'''
-    if "user" in session:
-        return redirect(url_for("user_page", user = session["user"]))
-    
-    if request.method == "POST":
-        user = request.form["username"]
-        password = request.form["password"]
-
-        stored_user = User.query.filter_by(user_lower = user.lower()).first() # this should be False if new user, True if existing user
-
-        if stored_user and check_password_hash(stored_user.password, password):
-            session.permanent = True
-            session["user"] = stored_user.user # stores the orignal case in session
-            return redirect(url_for("user_page", user = session["user"]))
-        else:
-            flash("The credentials you have entered do not match our system.", "error")
-            return render_template("login.html")
-    else:
-        return render_template("login.html")
-'''
 ##################
 
 if __name__ == '__main__':
