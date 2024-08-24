@@ -10,6 +10,7 @@ from flask_migrate import Migrate
 from datetime import datetime, timedelta
 from werkzeug.security import generate_password_hash, check_password_hash
 from dotenv import load_dotenv
+import uuid
 import os
 
 load_dotenv()
@@ -35,6 +36,10 @@ class Subtask(db.Model):
         self.completed = completed
         self.task_id = task_id
 
+
+## TO-DO: instead of using user_lower, use a UUID (randomly generated) as a foreign key instead
+## TO-DO: implement deleting account
+
 class Task(db.Model):
     __tablename__ = 'Task'
     id = db.Column(db.Integer, primary_key = True)
@@ -42,24 +47,25 @@ class Task(db.Model):
     description = db.Column(db.String(200), default = None)
     due_date = db.Column(db.Date, default = None)
     completed = db.Column(db.Boolean, default = False)
-    user_lower = db.Column(db.String(20), nullable = False) # matches user_lower in "User" class
+    user_id = db.Column(db.String(36), db.ForeignKey('User.id'), nullable = False) # matches id in "User" class
     subtasks = db.relationship('Subtask', backref='task', lazy = True)
 
-    def __init__(self, title, description, due_date, completed, user_lower):
+    def __init__(self, title, description, due_date, completed, user_id):
         self.title = title  
         self.description = description
         self.due_date = due_date
         self.completed = completed
-        self.user_lower = user_lower
+        self.user_id = user_id
 
 class User(db.Model):
     __tablename__ = 'User'
-    id = db.Column(db.Integer, primary_key = True)
+    id = db.Column(db.String(36), primary_key = True, default=lambda: str(uuid.uuid4()))
     user = db.Column(db.String(20), unique = True, nullable = False) # stores original case of username
     user_lower = db.Column(db.String(20), unique = True, nullable = False) # stores lower case version of username
     email = db.Column(db.String(100), unique = True, nullable = False)
     email_lower = db.Column(db.String(100), unique = True, nullable = False)
     password = db.Column(db.String(50), nullable = False)
+    tasks = db.relationship('Task', backref='user', lazy = True)
 
     def __init__(self, user, email, password):
         self.user = user
@@ -112,9 +118,9 @@ def add_task():
 
         if "user" in session:
             user = session["user"].lower()
-        else:
-            user = None
-        new_task = Task(title = title, description = description, due_date = due_date, completed = False, user_lower = user)
+            stored_user = User.query.filter_by(user_lower=user).first()
+        
+        new_task = Task(title = title, description = description, due_date = due_date, completed = False, user_id = stored_user.id)
         db.session.add(new_task)
         db.session.flush()
 
@@ -123,10 +129,8 @@ def add_task():
                 new_subtask = Subtask(title=subtask, completed = False, task_id = new_task.id)
                 db.session.add(new_subtask)
         db.session.commit()
-        
         return redirect(url_for("user_page", user = session["user"]))
-    else:
-        return render_template('add_task.html')
+    return render_template('add_task.html')
 
 
 @app.route('/update-task/<int:task_id>', methods=['POST'])
@@ -212,16 +216,16 @@ def user_page(user):
 
         # if the logged-in user is viewing their own profile, use re-queried user data
         if user.lower() == stored_user.user_lower:
-            tasks_passed = Task.query.filter_by(user_lower=stored_user.user_lower).all()
+            tasks_passed = stored_user.tasks
             return render_template("user.html", user=stored_user.user, tasks= tasks_passed)
         else:
             viewed_user = User.query.filter_by(user_lower=user.lower()).first()
             if viewed_user:
-                tasks_passed = Task.query.filter_by(user_lower=viewed_user.user_lower).all()
+                tasks_passed = viewed_user.tasks
                 return render_template("user.html", user=viewed_user.user, tasks= tasks_passed)
             else:
                 flash("User not found.", "error")
-                tasks_passed = Task.query.filter_by(user_lower=stored_user.user_lower).all()
+                tasks_passed = stored_user.tasks
                 return render_template("user.html", user=stored_user.user, tasks= tasks_passed)
 
     flash("To view profiles, you need to log in first.", "info")
