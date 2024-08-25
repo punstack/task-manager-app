@@ -2,8 +2,6 @@
 # .venv/Scripts/activate
 # https://getbootstrap.com/docs/4.3/getting-started/introduction/
 
-## think more about social feature?
-
 from flask import Flask, render_template, redirect, request, url_for, session, flash
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
@@ -23,6 +21,12 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db' # "tasks" and "users"
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
+
+friends = db.Table('friends',
+        db.Column('user_id', db.String(36), db.ForeignKey('User.id'), primary_key = True),
+        db.Column('friend_id', db.String(36), db.ForeignKey('User.id'), primary_key = True),
+        db.Column('is_accepted', db.Boolean, default = False) # need to check if this is still usable??
+)
 
 class Subtask(db.Model):
     __tablename__ = 'Subtask'
@@ -64,6 +68,12 @@ class User(db.Model):
     email_lower = db.Column(db.String(100), unique = True, nullable = False)
     password = db.Column(db.String(50), nullable = False)
     tasks = db.relationship('Task', backref='user', lazy = True)
+    friends = db.relationship('User',
+                              secondary = friends,
+                              primaryjoin = (friends.c.user_id == id),
+                              secondaryjoin = (friends.c.friend_id == id),
+                              backref = db.backref('friended_by', lazy = 'dynamic'), # for loading 'friended_by'
+                              lazy = 'dynamic') # for loading 'friends'
 
     def __init__(self, user, email, password):
         self.user = user
@@ -71,6 +81,54 @@ class User(db.Model):
         self.email = email
         self.email_lower = email.lower()
         self.password = password
+
+    ### OPERATIONS FOR INTERACTING WITH OTHER USERS
+
+    def send_friend_request(self, user):
+        if not self.has_pending_request(user) and not self.is_friend_with(user):
+            new_request = FriendRequest(sender_id=self.id, receiver_id=user.id)
+            db.session.add(new_request)
+            db.session.commit()
+
+    def is_friend_with(self, user):
+        return self.friends.filter(friends.c.friend_id == user.id).count() > 0
+
+    def accept_friend_request(self, user):
+        friend_request = FriendRequest.query.filter_by(sender_id=user.id, receiver_id=self.id).first()
+        if friend_request:
+            self.friends.append(user)
+            user.friends.append(self)
+            db.session.delete(friend_request)
+            db.session.commit()
+
+    def decline_friend_request(self, user): # make sure this works
+        friend_request = FriendRequest.query.filter_by(sender_id=user.id, receiver_id=self.id).first()
+        if friend_request:
+            db.session.delete(friend_request)
+            db.session.commit()
+
+    def remove_friend(self, user):
+        if self.is_friend_with(user):
+            self.friends.remove(user)
+            user.friends.remove(self)
+            db.session.commit()
+
+    def has_pending_request(self, user):
+        return FriendRequest.query.filter_by(sender_id=self.id, receiver_id=user.id).count() > 0
+    ###
+
+class FriendRequest(db.Model):
+    __tablename__ = 'FriendRequest'
+    id = db.Column(db.Integer, primary_key = True, nullable = False)
+    sender_id = db.Column(db.String(36), db.ForeignKey('User.id'), nullable=False)
+    receiver_id = db.Column(db.String(36), db.ForeignKey('User.id'), nullable=False)
+    timestamp = db.Column(db.DateTime, default=datetime.now())
+    
+    sender = db.relationship('User', foreign_keys=[sender_id], backref=db.backref('sent_requests', lazy='dynamic'))
+    receiver = db.relationship('User', foreign_keys=[receiver_id], backref=db.backref('received_requests', lazy='dynamic'))
+
+    def __repr__(self):
+        return f'<FriendRequest from {self.sender.username} to {self.receiver.username}>'
 
 with app.app_context():
     #db.drop_all() # drop all tables // not necessary unless new columns are added to models
@@ -97,7 +155,6 @@ def index():
         User.query.delete()
     db.session.commit()
     '''
-
     return render_template('index.html')
 
 @app.route('/add-task', methods = ["GET", "POST"])

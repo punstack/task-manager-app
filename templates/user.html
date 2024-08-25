@@ -11,26 +11,62 @@
   <div>
     <h1 class="h3 mb-3 display-4 font-weight-normal text-center">{{ user }}'s Tasks</h1>
   </div>
-  {% for task in tasks %}
-  <span {% if task.completed %} style="text-decoration: line-through" {% endif %}>
-    <div class="task">
-      <input type="checkbox" class="task-checkbox" {% if task.completed %}checked{% endif %} onclick="updateTaskStatus(this, {{ task.id }})">
-      <span class="task-name">{{ task.title }}</span>
-      <div class="task-details">
-        {% if task.description %}
-        <span class="task-description">{{ task.description }}</span><br>
-        {% endif %}
-        {% if task.due_date %}
-        <span class="task-due-date">{{ task.due_date }}</span><br>
-        {% endif %}
-        {% for subtask in task.subtasks %}
-        <input type="checkbox" class="subtask-checkbox" onclick="updateSubtaskStatus(this, {{ subtask.id }})" {% if subtask.completed %}checked{% endif %}>
-        <span class="subtask-name">{{ subtask.title }}</span><br>
-        {% endfor %}
-      </div>
-    </div>
-  </span>
-  {% endfor %} 
+
+  <!-- USER INTERACTIONS -->
+  {% if user != session.get("user") %}
+    <a>Making sure this still works</a><br>
+    {% if user in user.friends %}
+      <a>Already Friends</a>
+    {% else %}
+      <a>Send Friend Request</a>
+    {% endif %}
+  {% endif %}
+
+  {% if user != session.get("user") %}
+    {% for task in tasks %}
+      {% if task.task_status == True %}
+      <span {% if task.completed %} style="text-decoration: line-through" {% endif %}>
+        <div class="task">
+          <input type="checkbox" class="task-checkbox" {% if task.completed %}checked{% endif %} onclick="updateTaskStatus(this, {{ task.id }})">
+          <span class="task-name">{{ task.title }}</span>
+          <div class="task-details">
+            {% if task.description %}
+            <span class="task-description">{{ task.description }}</span><br>
+            {% endif %}
+            {% if task.due_date %}
+            <span class="task-due-date">{{ task.due_date }}</span><br>
+            {% endif %}
+            {% for subtask in task.subtasks %}
+            <input type="checkbox" class="subtask-checkbox" onclick="updateSubtaskStatus(this, {{ subtask.id }})" {% if subtask.completed %}checked{% endif %}>
+            <span class="subtask-name">{{ subtask.title }}</span><br>
+            {% endfor %}
+          </div>
+        </div>
+      </span>
+      {% endif %}
+    {% endfor %} 
+  {% else %}
+    {% for task in tasks %}
+      <span {% if task.completed %} style="text-decoration: line-through" {% endif %}>
+        <div class="task">
+          <input type="checkbox" class="task-checkbox" {% if task.completed %}checked{% endif %} onclick="updateTaskStatus(this, {{ task.id }})">
+          <span class="task-name">{{ task.title }}</span>
+          <div class="task-details">
+            {% if task.description %}
+            <span class="task-description">{{ task.description }}</span><br>
+            {% endif %}
+            {% if task.due_date %}
+            <span class="task-due-date">{{ task.due_date }}</span><br>
+            {% endif %}
+            {% for subtask in task.subtasks %}
+            <input type="checkbox" class="subtask-checkbox" onclick="updateSubtaskStatus(this, {{ subtask.id }})" {% if subtask.completed %}checked{% endif %}>
+            <span class="subtask-name">{{ subtask.title }}</span><br>
+            {% endfor %}
+          </div>
+        </div>
+      </span>
+      {% endfor %}
+  {% endif %}
 </div>
 
 <script>
