@@ -62,7 +62,7 @@
     .then(response => response.json())
     .then(data => {
       if (data.success) {
-        // Update the text decoration of the sibling span
+        // update the text decoration of the sibling span
         var subtaskName = checkbox.nextElementSibling;
         subtaskName.style.textDecoration = data.completed ? 'line-through' : 'none';
       } else {
@@ -72,3 +72,7 @@
   }
 </script> 
 {% endblock %}
+
+<!-- TODO: add "edit" button -->
+<!-- TODO: add "delete" button -->
+<!-- TODO: make completed button easier to use (larger, more dedicated) -->

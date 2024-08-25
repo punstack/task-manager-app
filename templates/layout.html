@@ -44,9 +44,6 @@
     </button>
     <div class="collapse navbar-collapse" id="navbarText">
       <ul class="navbar-nav mr-auto">
-        <li class="nav-item">
-          <a class="nav-link {% block home_status %}{% endblock %}" href="/">Home</a>
-        </li>
 
         {% if session.get("user") %}
         <li class="nav-item">
@@ -66,6 +63,10 @@
           <a class="nav-link" href="/logout">Log Out</a>
         </li>
         {% else %}
+        <li class="nav-item">
+          <a class="nav-link {% block home_status %}{% endblock %}" href="/">Home</a>
+        </li>
+        
         <li class="nav-item">
           <a class="nav-link {% block login_status %}{% endblock %}" href="/login">Login</a>
         </li>

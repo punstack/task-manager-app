@@ -2,10 +2,10 @@
 # .venv/Scripts/activate
 # https://getbootstrap.com/docs/4.3/getting-started/introduction/
 
+## think more about social feature?
+
 from flask import Flask, render_template, redirect, request, url_for, session, flash
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import ForeignKey
-from sqlalchemy.orm import relationship
 from flask_migrate import Migrate
 from datetime import datetime, timedelta
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -36,10 +36,6 @@ class Subtask(db.Model):
         self.completed = completed
         self.task_id = task_id
 
-
-## TO-DO: instead of using user_lower, use a UUID (randomly generated) as a foreign key instead
-## TO-DO: implement deleting account
-
 class Task(db.Model):
     __tablename__ = 'Task'
     id = db.Column(db.Integer, primary_key = True)
@@ -47,14 +43,16 @@ class Task(db.Model):
     description = db.Column(db.String(200), default = None)
     due_date = db.Column(db.Date, default = None)
     completed = db.Column(db.Boolean, default = False)
+    task_status = db.Column(db.Boolean, default = False, nullable = False) # False = private, True = public (easier to implement when viewing user page)
     user_id = db.Column(db.String(36), db.ForeignKey('User.id'), nullable = False) # matches id in "User" class
     subtasks = db.relationship('Subtask', backref='task', lazy = True)
 
-    def __init__(self, title, description, due_date, completed, user_id):
+    def __init__(self, title, description, due_date, completed, task_status, user_id):
         self.title = title  
         self.description = description
         self.due_date = due_date
         self.completed = completed
+        self.task_status = task_status
         self.user_id = user_id
 
 class User(db.Model):
@@ -109,6 +107,7 @@ def add_task():
         description = request.form["description"] # else None (except it just says "")
         subtasks = request.form.getlist("subtask[]") # else None (except it just says "")
         due_date = request.form.get("due_date") # else None # prints as YYYY-MM-DD
+        task_status = request.form.get("task_status") # True or False
         
         try:
             if type(due_date) is str:
@@ -116,11 +115,19 @@ def add_task():
         except:
             due_date = None
 
+        if task_status == "true":
+            task_status = True
+        elif task_status == "false":
+            task_status = False
+        else:
+            flash(f"An error occurred: {str(e)}", "error")
+            task_status = False
+
         if "user" in session:
             user = session["user"].lower()
             stored_user = User.query.filter_by(user_lower=user).first()
         
-        new_task = Task(title = title, description = description, due_date = due_date, completed = False, user_id = stored_user.id)
+        new_task = Task(title = title, description = description, due_date = due_date, completed = False, task_status = task_status, user_id = stored_user.id)
         db.session.add(new_task)
         db.session.flush()
 
@@ -276,6 +283,16 @@ def settings():
     flash("You need to log in first.", "error")
     return redirect(url_for("login"))
 
+'''
+# for deleting a user
+# once confirmed acc deletion
+user = session["user"].lower()
+stored_user = User.query.filter_by(user_lower=user).first()
+
+db.session.delete(stored_user)
+
+'''
+
 @app.route("/logout")
 def logout():
     if "user" in session:
@@ -296,7 +313,7 @@ def view_users():
 if __name__ == '__main__':
     app.run(debug=True)
 
-#TO-DO: should the web app have a social feature (friends/following/followers)?
+#TO-DO: should the web app have a social feature (friends or following/followers)?
 #TO-DO: how would users see other peoples' tasks? HOW is there a social element in a task managing app?
 #TO-DO: fix up home page to be pretty :)
 #TO-DO: fix up my profile to be pretty
