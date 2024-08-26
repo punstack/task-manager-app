@@ -33,7 +33,7 @@ class Subtask(db.Model):
     id = db.Column(db.Integer, primary_key = True)
     title = db.Column(db.String(100), default = None)
     completed = db.Column(db.Boolean, default = False)
-    task_id = db.Column(db.Integer, db.ForeignKey('Task.id'), nullable = False)
+    task_id = db.Column(db.Integer, db.ForeignKey('Task.id', ondelete='CASCADE'), nullable = False)
 
     def __init__(self, title, completed, task_id):
         self.title = title
@@ -48,8 +48,9 @@ class Task(db.Model):
     due_date = db.Column(db.Date, default = None)
     completed = db.Column(db.Boolean, default = False)
     task_status = db.Column(db.Boolean, default = False, nullable = False) # False = private, True = public (easier to implement when viewing user page)
-    user_id = db.Column(db.String(36), db.ForeignKey('User.id'), nullable = False) # matches id in "User" class
-    subtasks = db.relationship('Subtask', backref='task', lazy = True)
+    user_id = db.Column(db.String(36), db.ForeignKey('User.id', ondelete='CASCADE'), nullable = False) # matches id in "User" class
+    
+    subtasks = db.relationship('Subtask', backref='task', lazy = True, cascade = 'all, delete-orphan')
 
     def __init__(self, title, description, due_date, completed, task_status, user_id):
         self.title = title
@@ -67,7 +68,7 @@ class User(db.Model):
     email = db.Column(db.String(100), unique = True, nullable = False)
     email_lower = db.Column(db.String(100), unique = True, nullable = False)
     password = db.Column(db.String(50), nullable = False)
-    tasks = db.relationship('Task', backref='user', lazy = True)
+    tasks = db.relationship('Task', backref='user', lazy = True, cascade = 'all, delete-orphan')
     friends = db.relationship('User',
                               secondary = friends,
                               primaryjoin = (friends.c.user_id == id),
@@ -124,8 +125,8 @@ class FriendRequest(db.Model):
     receiver_id = db.Column(db.String(36), db.ForeignKey('User.id'), nullable=False)
     timestamp = db.Column(db.DateTime, default=datetime.now())
 
-    sender = db.relationship('User', foreign_keys=[sender_id], backref=db.backref('sent_requests', lazy='dynamic'))
-    receiver = db.relationship('User', foreign_keys=[receiver_id], backref=db.backref('received_requests', lazy='dynamic'))
+    sender = db.relationship('User', foreign_keys=[sender_id], backref=db.backref('sent_requests', lazy='dynamic', cascade='all, delete-orphan'))
+    receiver = db.relationship('User', foreign_keys=[receiver_id], backref=db.backref('received_requests', lazy='dynamic', cascade='all, delete-orphan'))
 
     def __repr__(self):
         return f'<FriendRequest from {self.sender.username} to {self.receiver.username}>'
@@ -140,7 +141,6 @@ def check_user_existence():
         user_lower = session["user"].lower()
         if not User.query.filter_by(user_lower=user_lower).first():
             session.pop("user", None)
-            flash("Your account no longer exists. Please log in again.", "error")
             return redirect(url_for("login"))
 
 @app.route('/')
@@ -266,7 +266,20 @@ def signup():
     else:
         return render_template("signup.html")
 
-@app.route("/<user>")
+def friend_request_status(user, other):
+    if request.method == "POST":
+        friend_request_status = request.form["request"]
+
+        if friend_request_status == "-1": # already friends, remove friend
+            user.remove_friend(other)
+        elif friend_request_status == "0": # friend request denied
+            user.decline_friend_request(other)
+        elif friend_request_status == "1": # friend request accepted
+            user.accept_friend_request(other)
+        elif friend_request_status == "2": # send friend request
+            user.send_friend_request(other)
+
+@app.route("/<user>", methods = ["GET", "POST"])
 def user_page(user):
     if "user" in session:
         # information for passed dictionary
@@ -277,7 +290,7 @@ def user_page(user):
         }
 
         if not info["stored_user"]:
-            flash("Your account no longer exists. Please log in again.", "error")
+            flash("Your account has been deleted. Please log in again.", "error")
             session.pop("user", None)
             return redirect(url_for("login"))
 
@@ -286,10 +299,13 @@ def user_page(user):
             info["tasks"] = info["stored_user"].tasks
             return render_template("user.html", user = info["stored_user"].user, info = info)
         else:
+            # if the logged-in user is viewing an existing profile
             info["viewed_user"] = User.query.filter_by(user_lower=user.lower()).first()
             if info["viewed_user"]:
                 info["tasks"] = info["viewed_user"].tasks
+                friend_request_status(info["stored_user"], info["viewed_user"])
                 return render_template("user.html", user = info["viewed_user"].user, info = info)
+            # if the logged-in user is viewing a non-existent profile
             else:
                 flash("User not found.", "error")
                 info["tasks"] = info["stored_user"].tasks
@@ -298,6 +314,21 @@ def user_page(user):
     flash("To view profiles, you need to log in first.", "info")
     return redirect(url_for("login"))
 
+def delete_status(user):
+    delete_status = request.form["delete_status"]
+
+    if delete_status == "-1": # delete account
+        try:
+            db.session.delete(user)
+            db.session.commit()
+            session.pop("user", None)
+            flash("Your account has been deleted. Please log in again.", "error")
+            return redirect(url_for("login"))
+        except Exception as e:
+            db.session.rollback()  
+            flash(f"An error occured while trying to delete the account: {str(e)}", "error")
+            return redirect(url_for("settings"))
+        
 @app.route("/settings", methods=["GET", "POST"])
 def settings():
     if "user" in session:
@@ -305,6 +336,7 @@ def settings():
         stored_user = User.query.filter_by(user_lower=session["user"].lower()).first()
 
         if request.method == "POST":
+            delete_status(stored_user)
             new_email = request.form["email"]
             new_username = request.form["username"]
             new_password = request.form["password"]
@@ -364,11 +396,11 @@ def logout():
 
 @app.route("/view_users")
 def view_users():
-    admin = User.query.filter_by(user_lower="admin").first()
-    punstack = User.query.filter_by(user_lower="punstack").first()
-    punstack.remove_friend(admin)
-    admin.send_friend_request(punstack)
-    punstack.send_friend_request(admin)
+    #admin = User.query.filter_by(user_lower="admin").first()
+    #punstack = User.query.filter_by(user_lower="punstack").first()
+    #punstack.remove_friend(admin)
+    #admin.send_friend_request(punstack)
+    #punstack.send_friend_request(admin)
     #punstack.accept_friend_request(admin)
     #print(punstack.is_friend_with(admin))
     '''

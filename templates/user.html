@@ -13,22 +13,29 @@
   </div>
 
   <!-- USER INTERACTIONS -->
+  <!-- TODO: when clicking these buttons, have a return value so that backend can update whether stored_user and viewed_user become friends :) -->
+  
   {% if user != info["stored_user"].user %}
     <a>Making sure this still works</a><br>
     {% if info["viewed_user"] in info["stored_user"].friends %}
-      <button class="btn btn-secondary btn-block" type="button">Already Friends</button>
+      <form class = "friend_request_status" action="{{ url_for('user_page', user=user )}}" method = "POST">
+        <button id = "request" name = "request" class="btn btn-secondary btn-block" type="submit" value = "-1">Remove Friend</button>
+      </form>
     {% elif info["viewed_user"].has_pending_request(info["stored_user"]) %}
-      <button class="btn btn-secondary btn-block" type="button">Delete Friend Request</button>
-      <button class="btn btn-primary btn-block" type="button">Accept Friend Request</button>
+      <form class = "friend_request_status" action="{{ url_for('user_page', user=user )}}" method = "POST">
+        <button id = "request" name = "request" class="btn btn-secondary btn-block" type="submit" value = "0">Delete Friend Request</button>
+        <button id = "request" name = "request" class="btn btn-primary btn-block" type="submit" value = "1">Accept Friend Request</button>
+      </form>
     {% elif info["stored_user"].has_pending_request(info["viewed_user"]) %}
       <button class="btn btn-secondary btn-block" type="button">Pending Friend Request</button>
     {% else %}
-      <button class="btn btn-primary btn-block" type="button">Send Friend Request</button>
+      <form class = "friend_request_status" action="{{ url_for('user_page', user=user )}}" method = "POST">
+        <button id = "request" name = "request" class="btn btn-primary btn-block" type="submit" value = "2">Send Friend Request</button>
+      </form>
     {% endif %}
   {% endif %}
 
   <!-- TASKS -->
-  <!-- TODO: when clicking these buttons, have a return value so that backend can update whether stored_user and viewed_user become friends :) -->
   {% if user != session.get("user") %} <!-- VIEWING SOMEONE ELSES PAGE -->
     {% for task in info["tasks"] %}
       {% if task.task_status == True %}
