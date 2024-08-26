@@ -499,4 +499,12 @@ def view_users():
     return render_template("view_users.html", values=User.query.all())
 
 if __name__ == '__main__':
+    setting_user = User(user = "settings", email = "", password = None)
+    add_task_user = User(user = "add-task", email = "", password = None)
+    archive_user = User(user = "archive", email = "", password = None)
+    search_user = User(user = "search", email = "", password = None)
+    sign_up_user = User(user = "sign-up", email = "", password = None)
+    login_user = User(user = "login", email = "", password = None)
+    user_user = User(user = "user", email = "", password = None)
+
     app.run(debug=True)
