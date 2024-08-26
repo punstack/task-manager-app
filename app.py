@@ -355,6 +355,22 @@ def user_page(user):
     flash("To view profiles, you need to log in first.", "info")
     return redirect(url_for("login"))
 
+def search_tasks(query):
+    if query:
+        results = User.query.filter(
+            (User.user.ilike(f'%{query}%'))
+        ).all()
+    else:
+        results = []
+        
+    return results
+
+@app.route("/search", methods = ["GET"])
+def search():
+    query = request.args.get('query', '') # from front-end; defaults to empty string if no query is provided
+    results = search_tasks(query)
+    return render_template("search.html", results = results)
+
 @app.route("/archive", methods = ["GET", "POST"])
 def archive():
     stored_user = User.query.filter_by(user_lower=session["user"].lower()).first()

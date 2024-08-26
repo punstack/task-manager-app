@@ -90,8 +90,8 @@
       </ul>
 
       {% if session.get("user") %}
-      <form class="form-inline navbar-right">
-        <input class="form-control mr-2" type="search" placeholder="Search..." aria-label="Search">
+      <form class="form-inline navbar-right" action = "{{ url_for('search') }}" method = "GET">
+        <input name = "query" class="form-control mr-2" type="search" placeholder="Search..." aria-label="Search">
         <button class="btn btn-outline-light" type="submit">Search</button>
       </form>
       {% endif %}

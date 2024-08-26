@@ -1,0 +1,29 @@
+{% extends "layout.html" %}
+{% block title %}Task Manager - Search Results{% endblock %}
+
+{% block home_status %}{% endblock %}
+{% block user_status %}{% endblock %}
+{% block archive_status %}{% endblock %}
+{% block settings_status %}{% endblock %}
+{% block add_status %}{% endblock %}
+
+{% block content %}
+
+<body class="text-left">
+    <div class="position-relative m-md-3">
+        <br>
+        <div>
+          <h1 class="h3 mb-3 display-4 font-weight-normal text-center">Search Results</h1>
+        </div>
+        {% if results %}
+        <ul>
+            {% for user in results %}
+                <li><a href = {{url_for("user_page", user = user.user)}}>{{ user.user }}</a></li>
+            {% endfor %}
+        </ul>
+        {% else %}
+            <p>No users match your query.</p>
+        {% endif %}
+    </div>
+</body>
+{% endblock %}
