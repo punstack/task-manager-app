@@ -20,6 +20,12 @@
       flex-direction: column;
     }
 
+    .navbar-right {
+      margin-left: auto;
+      display: flex;
+      padding-right: 1rem;
+    }
+
     main {
       flex: 1;
     }
@@ -47,8 +53,7 @@
       <span class="navbar-toggler-icon"></span>
     </button>
     <div class="collapse navbar-collapse" id="navbarText">
-      <ul class="navbar-nav mr-auto">
-
+      <ul class="navbar-nav mr-auto mt-2 mt-lg-0">
         {% if session.get("user") %}
         <li class="nav-item">
           <a class="nav-link {% block add_status %}{% endblock %}" href="/add-task">Add Task</a>
@@ -73,19 +78,26 @@
         <li class="nav-item">
           <a class="nav-link {% block home_status %}{% endblock %}" href="/">Home</a>
         </li>
-        
+
         <li class="nav-item">
           <a class="nav-link {% block login_status %}{% endblock %}" href="/login">Login</a>
         </li>
-
+        
         <li class="nav-item">
           <a class="nav-link {% block signup_status %}{% endblock %}" href="/sign-up">Sign Up</a>
         </li>
         {% endif %}
       </ul>
+
+      {% if session.get("user") %}
+      <form class="form-inline navbar-right">
+        <input class="form-control mr-2" type="search" placeholder="Search..." aria-label="Search">
+        <button class="btn btn-outline-light" type="submit">Search</button>
+      </form>
+      {% endif %}
     </div>
   </nav>
-  <!-- END NAV BAR -->
+<!-- END NAV BAR -->
 
   <main class="flex-shrink-0">
     <div class="container">
