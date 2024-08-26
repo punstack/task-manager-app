@@ -4,6 +4,10 @@
     .subtask-wrapper {
         margin-bottom: 10px;
     }
+    .form-label-group input[type="text"] {
+        width: 100%;
+        margin-bottom: 10px;
+    }
 </style>
 {% block home_status %}{% endblock %}
 {% block user_status %}{% endblock %}
@@ -12,29 +16,36 @@
 
 {% block content %}
 <div class="container">
-    <form class="form-signin" action="#" method="POST">
+    <form class="form-signin" action="{{ url_for('add_task') }}" method="POST">
+        
         <div>
             <h1 class="h3 mb-3 display-4 font-weight-normal text-center">Add Task</h1>
         </div>
 
+        {% if task %}
+            <input type = "hidden" name = "task_id" value = "{{ task.id }}">
+        {% endif %}
+        
         <div class="form-label-group text-left">
-            <input type="text" name="title" class="form-control" id="title" placeholder="" required autofocus>
+            <input type="text" name="title" class="form-control" id="title" placeholder="" value = "{{ task.title if task else '' }}" required autofocus>
             <label for="title">Task Name*</label>
         </div>
 
         <div class="form-label-group text-left">
-            <textarea type="text" name="description" class="form-control" id="description" placeholder=""
-                rows="3"></textarea>
+            <textarea type="text" name="description" class="form-control" id="description" placeholder="" rows="3">{{ task.description if task else '' }}</textarea>
             <label for="description">Task Description</label>
         </div>
         
         <div id="subtask_field">
             <div class="content" id="wrapper"> 
-                <div class="form-label-group text-left">
-                    <input type="text" class="form-control" name="subtask[]" id="subtask" placeholder="">
-                    <label for="subtask">Sub-Task</label>
-                </div>
+                {% for subtask in subtasks %}
+                    <div class="form-label-group text-left">
+                        <input type="text" class="form-control" name="subtask[]" id="subtask_{{ loop.index }}" placeholder="" value="{{ subtask }}">
+                        <label for="subtask_{{ loop.index }}">Sub-Task</label>
+                    </div>
+                {% endfor %}
             </div>
+            
         </div>
 
         <div class="container">
@@ -50,22 +61,22 @@
         <br>
         <br>
         <div class="form-label-group text-left">
-            <input type="date" class="form-control" name="due_date" id="due_date">
+            <input type="date" class="form-control" name="due_date" id="due_date" value="{{ task.due_date.strftime('%Y-%m-%d') if task and task.due_date else '' }}">
             <label for="due_date">Due Date</label>
         </div>
 
         <!-- public or private task -->
         <div class="form-check">
-            <input class="form-check-input" type="radio" name="task_status" id="task_status" value="true">
-            <label class="form-check-label" for="task_status">
+            <input class="form-check-input" type="radio" name="task_status" id="task_status" value="true" {% if task and task.task_status %} checked {% endif %}>
+            <label class="form-check-label" for="task_status_public">
               Public Task
             </label>
             <small style="font-size:0.8em" id="task_status" class="form-text text-muted">Friends can see this task. You can change this at any time.</small>
         </div>
         
         <div class="form-check">
-            <input class="form-check-input" type="radio" name="task_status" id="task_status" value="false" checked>
-            <label class="form-check-label" for="task_status">
+            <input class="form-check-input" type="radio" name="task_status" id="task_status" value="false" {% if task and not task.task_status %} checked {% else %} checked {% endif %}>
+            <label class="form-check-label" for="task_status_private">
               Private Task
             </label>
             <small style="font-size:0.8em" id="task_status" class="form-text text-muted">Only you can see this task. You can change this at any time.</small>
@@ -93,19 +104,21 @@
 <script>
     function addSubtaskFields() {
         var wrapper = document.getElementById('wrapper');
+        var subtaskCount = wrapper.children.length + 1; // Ensure unique ID for new subtasks
         var newSubtask = document.createElement('div');
         newSubtask.className = 'form-label-group text-left';
         newSubtask.innerHTML = 
-            '<input type="text" class="form-control" name="subtask[]" placeholder="">' +
-            '<label for="subtask">Sub-Task</label>';
+            '<input type="text" class="form-control" name="subtask[]" id="subtask_' + subtaskCount + '" placeholder="">' +
+            '<label for="subtask_' + subtaskCount + '">Sub-Task</label>';
         wrapper.appendChild(newSubtask);
     }
 
     function removeSubtaskFields() {
         var wrapper = document.getElementById('wrapper');
-        if (wrapper.children.length > 1) {
+        if (wrapper.children.length > 0) {
             wrapper.removeChild(wrapper.lastChild);
         }
     }
+
 </script>
 {% endblock %}

@@ -47,17 +47,19 @@ class Task(db.Model):
     description = db.Column(db.String(200), default = None)
     due_date = db.Column(db.Date, default = None)
     completed = db.Column(db.Boolean, default = False)
-    task_status = db.Column(db.Boolean, default = False, nullable = False) # False = private, True = public (easier to implement when viewing user page)
+    task_status = db.Column(db.Boolean, default = False, nullable = False) # False = private, True = public
+    archive_status = db.Column(db.Boolean, default = False, nullable = False) # False = not archived, True = archived
     user_id = db.Column(db.String(36), db.ForeignKey('User.id', ondelete='CASCADE'), nullable = False) # matches id in "User" class
     
     subtasks = db.relationship('Subtask', backref='task', lazy = True, cascade = 'all, delete-orphan')
 
-    def __init__(self, title, description, due_date, completed, task_status, user_id):
+    def __init__(self, title, description, due_date, completed, task_status, archive_status, user_id):
         self.title = title
         self.description = description
         self.due_date = due_date
         self.completed = completed
         self.task_status = task_status
+        self.archive_status = archive_status
         self.user_id = user_id
 
 class User(db.Model):
@@ -160,16 +162,20 @@ def index():
 @app.route('/add-task', methods = ["GET", "POST"])
 def add_task():
     if request.method == "POST":
-        title = request.form["title"]
-        description = request.form["description"] # else None (except it just says "")
-        subtasks = request.form.getlist("subtask[]") # else None (except it just says "")
-        due_date = request.form.get("due_date") # else None # prints as YYYY-MM-DD
-        task_status = request.form.get("task_status") # True or False
+        title = request.form.get("title")
+        description = request.form.get("description", "")  # Default to empty string if None
+        subtasks = request.form.getlist("subtask[]")
+        due_date = request.form.get("due_date")
+        task_status = request.form.get("task_status") # False = private, True = public
+        task_id = request.form.get("task_id")
 
         try:
-            if type(due_date) is str:
+            if isinstance(due_date, str) and due_date:
                 due_date = datetime.strptime(due_date, '%Y-%m-%d')
-        except:
+            else:
+                due_date = None
+        except Exception as e:
+            flash(f"An error occurred while processing the due date: {str(e)}", "error")
             due_date = None
 
         if task_status == "true":
@@ -177,25 +183,41 @@ def add_task():
         elif task_status == "false":
             task_status = False
         else:
-            flash(f"An error occurred: {str(e)}", "error")
+            flash("Invalid task status", "error")
             task_status = False
 
         if "user" in session:
             user = session["user"].lower()
             stored_user = User.query.filter_by(user_lower=user).first()
-
-        new_task = Task(title = title, description = description, due_date = due_date, completed = False, task_status = task_status, user_id = stored_user.id)
-        db.session.add(new_task)
+        
+        if task_id: # updates existing task
+            task = Task.query.get_or_404(task_id)
+            task.title = title
+            task.description = description
+            task.due_date = due_date
+            task.task_status = task_status
+        else:
+            task = Task(title = title, description = description, due_date = due_date, completed = False, task_status = task_status, archive_status = False, user_id = stored_user.id)
+            db.session.add(task)
+        
         db.session.flush()
 
+        Subtask.query.filter_by(task_id=task.id).delete()  # remove existing subtasks associated with original task
         for subtask in subtasks:
             if subtask.strip():
-                new_subtask = Subtask(title=subtask, completed = False, task_id = new_task.id)
+                new_subtask = Subtask(title=subtask, completed=False, task_id=task.id)
                 db.session.add(new_subtask)
         db.session.commit()
-        return redirect(url_for("user_page", user = session["user"]))
-    return render_template('add_task.html')
 
+        return redirect(url_for("user_page", user=session["user"]))
+    
+    task_id = request.args.get('task_id')
+    if task_id:
+        task = Task.query.get_or_404(task_id)
+        subtasks = [subtask.title for subtask in task.subtasks]
+        return render_template('add_task.html', task=task, subtasks=subtasks)
+    
+    return render_template('add_task.html')
 
 @app.route('/update-task/<int:task_id>', methods=['POST'])
 def update_task(task_id):
@@ -297,6 +319,25 @@ def user_page(user):
         # if the logged-in user is viewing their own profile, use re-queried user data
         if user.lower() == info["stored_user"].user_lower:
             info["tasks"] = info["stored_user"].tasks
+
+            if request.method == "POST": # logged-in user does a request on current task
+                dropdown_request = request.form["dropdown"]
+                task_id = int(request.form.get("task_id"))
+                task = Task.query.get(task_id)
+
+                if dropdown_request == "-1": # task to be deleted
+                    db.session.delete(task)
+                    db.session.commit()
+                    flash("Task deleted.", "success")
+                    info["tasks"] = info["stored_user"].tasks
+                elif dropdown_request == "0": # task to be achived
+                    task.archive_status = True
+                    db.session.commit()
+                    flash("Task archived.", "success")
+                    info["tasks"] = info["stored_user"].tasks
+                elif dropdown_request == "1": # task to be appended
+                    return redirect(url_for('add_task', task_id = task.id))
+                
             return render_template("user.html", user = info["stored_user"].user, info = info)
         else:
             # if the logged-in user is viewing an existing profile
@@ -309,26 +350,55 @@ def user_page(user):
             else:
                 flash("User not found.", "error")
                 info["tasks"] = info["stored_user"].tasks
-                return render_template("user.html", user = info["stored_user"].user, info = info)
+                return redirect(url_for("user_page", user = session["user"]))
 
     flash("To view profiles, you need to log in first.", "info")
     return redirect(url_for("login"))
 
-def delete_status(user):
-    delete_status = request.form["delete_status"]
+@app.route("/archive", methods = ["GET", "POST"])
+def archive():
+    stored_user = User.query.filter_by(user_lower=session["user"].lower()).first()
+    info = {
+        'stored_user': stored_user,
+        'tasks': stored_user.tasks
+    }
 
-    if delete_status == "-1": # delete account
-        try:
-            db.session.delete(user)
+    if request.method == "POST": # logged-in user does a request on current task
+        dropdown_request = request.form["dropdown"]
+        task_id = int(request.form.get("task_id"))
+        task = Task.query.get(task_id)
+
+        if dropdown_request == "-1": # task to be deleted
+            db.session.delete(task)
             db.session.commit()
-            session.pop("user", None)
-            flash("Your account has been deleted. Please log in again.", "error")
-            return redirect(url_for("login"))
-        except Exception as e:
-            db.session.rollback()  
-            flash(f"An error occured while trying to delete the account: {str(e)}", "error")
-            return redirect(url_for("settings"))
-        
+            flash("Task deleted.", "success")
+            info["tasks"] = info["stored_user"].tasks
+        elif dropdown_request == "0": # task to be achived
+            task.archive_status = False
+            db.session.commit()
+            flash("Task unarchived.", "success")
+            info["tasks"] = info["stored_user"].tasks
+    
+    return render_template("archive.html", info = info)
+
+def delete_status(user):
+    try:
+        delete_status = request.form["delete_status"]
+
+        if delete_status == "-1": # delete account
+            try:
+                db.session.delete(user)
+                db.session.commit()
+                session.pop("user", None)
+                flash("Your account has been deleted. Please log in again.", "error")
+                return redirect(url_for("login"))
+            except Exception as e:
+                db.session.rollback()  
+                flash(f"An error occured while trying to delete the account: {str(e)}", "error")
+                return redirect(url_for("settings"))
+    except:
+        return render_template("settings.html", email=user.email, user=session["user"])
+     
 @app.route("/settings", methods=["GET", "POST"])
 def settings():
     if "user" in session:
@@ -336,7 +406,9 @@ def settings():
         stored_user = User.query.filter_by(user_lower=session["user"].lower()).first()
 
         if request.method == "POST":
+            # check if user is deleting account
             delete_status(stored_user)
+            # if user not deleting account, then user is probably updating something
             new_email = request.form["email"]
             new_username = request.form["username"]
             new_password = request.form["password"]
@@ -375,16 +447,6 @@ def settings():
     flash("You need to log in first.", "error")
     return redirect(url_for("login"))
 
-'''
-# for deleting a user
-# once confirmed acc deletion
-user = session["user"].lower()
-stored_user = User.query.filter_by(user_lower=user).first()
-
-db.session.delete(stored_user)
-
-'''
-
 @app.route("/logout")
 def logout():
     if "user" in session:
@@ -396,40 +458,7 @@ def logout():
 
 @app.route("/view_users")
 def view_users():
-    #admin = User.query.filter_by(user_lower="admin").first()
-    #punstack = User.query.filter_by(user_lower="punstack").first()
-    #punstack.remove_friend(admin)
-    #admin.send_friend_request(punstack)
-    #punstack.send_friend_request(admin)
-    #punstack.accept_friend_request(admin)
-    #print(punstack.is_friend_with(admin))
-    '''
-    # need to implement these functions! yay!
-    admin = User.query.filter_by(user_lower="admin").first()
-    punstack = User.query.filter_by(user_lower="punstack").first()
-
-    #print(admin)
-    #print(punstack)
-    admin.send_friend_request(punstack)
-    print(punstack.has_pending_request(admin))
-    print(admin.has_pending_request(punstack))
-    punstack.accept_friend_request(admin)
-    print(punstack.is_friend_with(admin))
-    #punstack.decline_friend_request(admin)
-    print(punstack.is_friend_with(admin))
-    #punstack.remove_friend(admin)
-    print(admin.has_pending_request(punstack))
-    '''
     return render_template("view_users.html", values=User.query.all())
 
 if __name__ == '__main__':
-    
     app.run(debug=True)
-    
-
-#TO-DO: fix up home page to be pretty :)
-#TO-DO: fix up my profile to be pretty
-#TO-DO: add "completed" and "remove" buttons for all tasks
-#TO-DO: implement checking for used usernames (maybe in-page instead of on a refresh of the page)
-#TO-DO: implement password protection (eg. 8-24 characters, one number, one uppercase letter... doesn't have to be so specific)
-#TO-DO: this is for later if this ever goes to prod, but add a "forgot password?" button linked to an email with a password reset OR a randomly generated password. not sure which is cooler

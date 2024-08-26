@@ -55,8 +55,11 @@
         </li>
 
         <li class="nav-item">
-          <a class="nav-link {% block user_status %}{% endblock %}" href="{{url_for("user_page",
-            user=session["user"])}}">My Profile</a>
+          <a class="nav-link {% block user_status %}{% endblock %}" href="{{url_for("user_page", user=session["user"])}}">My Profile</a>
+        </li>
+
+        <li class="nav-item">
+          <a class="nav-link {% block archive_status %}{% endblock %}" href="/archive">Archived Tasks</a>
         </li>
 
         <li class="nav-item">
@@ -104,7 +107,13 @@
   <!-- FOOTER -->
   <footer class="footer fixed-bottom mt-auto py-3 bg-primary">
     <div class="container">
-      <span>Place sticky footer content here.</span>
+      <span>
+        <p style = "color: #ffffff">
+          Contact me:
+        <a href="https://www.linkedin.com/in/amara-gammon/" style="color: #ffffff">LinkedIn</a> // 
+        <a href="https://github.com/punstack" style="color: #ffffff">Github</a>
+        </p>
+      </span>
     </div>
   </footer>
   <!-- FOOTER -->
