@@ -1,0 +1,89 @@
+{% extends "layout.html" %}
+{% block title %}Task Manager - Archived Tasks{% endblock %}
+
+{% block home_status %}{% endblock %}
+{% block user_status %}{% endblock %}
+{% block archive_status %}active{% endblock %}
+{% block settings_status %}{% endblock %}
+{% block add_status %}{% endblock %}
+
+{% block content %}
+<div class="position-relative m-md-3">
+  <div>
+    <h1 class="h3 mb-3 display-4 font-weight-normal text-center">Archived Tasks</h1>
+  </div>
+
+  <!-- ARCHIVED TASKS -->
+  {% if info["stored_user"] %} <!-- VIEWING MY PAGE -->
+    {% for task in info["tasks"] %}
+      {% if task.archive_status == True %}
+        <span {% if task.completed %} style="text-decoration: line-through" {% endif %}>
+          <div class="task text-muted">
+            <input type="checkbox" class="task-checkbox" {% if task.completed %}checked{% endif %} onclick="updateTaskStatus(this, {{ task.id }})">
+            <span class="task-name">{{ task.title }}</span>
+            <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"></button>
+              <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                <form class="dropdown_request" action="{{ url_for('archive') }}" method="POST">
+                  <input type = "hidden" name = "task_id" value = "{{ task.id }}">
+                  <button type="submit" name="dropdown" id = "dropdown" value="0" class="dropdown-item">Unarchive task</button>
+                  <button type="submit" name="dropdown" id = "dropdown" value="-1" class="dropdown-item">Delete task</button>
+                </form>                
+              </div>
+            <div class="task-details">
+              {% if task.description %}
+                <span class="task-description">{{ task.description }}</span><br>
+              {% endif %}
+              {% if task.due_date %}
+                <span class="task-due-date">{{ task.due_date }}</span><br>
+              {% endif %}
+              {% for subtask in task.subtasks %}
+                <input type="checkbox" class="subtask-checkbox" onclick="updateSubtaskStatus(this, {{ subtask.id }})" {% if subtask.completed %}checked{% endif %}>
+                <span class="subtask-name">{{ subtask.title }}</span><br>
+              {% endfor %}
+            </div>
+          </div>
+        </span>
+      {% endif %}
+    {% endfor %}
+  {% endif %}
+</div>
+
+<script>
+  function updateTaskStatus(checkbox, taskId) {
+    fetch(`/update-task/${taskId}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        checkbox.parentElement.querySelector('.task-name').style.textDecoration = data.completed ? 'line-through' : 'none';
+        checkbox.parentElement.style.textDecoration = data.completed ? 'line-through' : 'none';
+      } else {
+        alert("Failed to update task status.");
+      }
+    });
+  }
+
+  function updateSubtaskStatus(checkbox, subtaskId) {
+    fetch(`/update-subtask/${subtaskId}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      }
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        // update the text decoration of the sibling span
+        var subtaskName = checkbox.nextElementSibling;
+        subtaskName.style.textDecoration = data.completed ? 'line-through' : 'none';
+      } else {
+        alert("Failed to update subtask status.");
+      }
+    });
+  }
+</script> 
+{% endblock %}

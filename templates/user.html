@@ -13,10 +13,7 @@
   </div>
 
   <!-- USER INTERACTIONS -->
-  <!-- TODO: when clicking these buttons, have a return value so that backend can update whether stored_user and viewed_user become friends :) -->
-  
   {% if user != info["stored_user"].user %}
-    <a>Making sure this still works</a><br>
     {% if info["viewed_user"] in info["stored_user"].friends %}
       <form class = "friend_request_status" action="{{ url_for('user_page', user=user )}}" method = "POST">
         <button id = "request" name = "request" class="btn btn-secondary btn-block" type="submit" value = "-1">Remove Friend</button>
@@ -38,48 +35,60 @@
   <!-- TASKS -->
   {% if user != session.get("user") %} <!-- VIEWING SOMEONE ELSES PAGE -->
     {% for task in info["tasks"] %}
-      {% if task.task_status == True %}
-      <span {% if task.completed %} style="text-decoration: line-through" {% endif %}>
-        <div class="task">
-          <input type="checkbox" class="task-checkbox" {% if task.completed %}checked{% endif %} onclick="updateTaskStatus(this, {{ task.id }})" disabled>
-          <span class="task-name">{{ task.title }}</span>
-          <div class="task-details">
-            {% if task.description %}
-            <span class="task-description">{{ task.description }}</span><br>
-            {% endif %}
-            {% if task.due_date %}
-            <span class="task-due-date">{{ task.due_date }}</span><br>
-            {% endif %}
-            {% for subtask in task.subtasks %}
-            <input type="checkbox" class="subtask-checkbox" onclick="updateSubtaskStatus(this, {{ subtask.id }})" {% if subtask.completed %}checked{% endif %} disabled>
-            <span class="subtask-name">{{ subtask.title }}</span><br>
-            {% endfor %}
+      {% if task.archive_status == False %}
+        {% if task.task_status == True %}
+        <span {% if task.completed %} style="text-decoration: line-through" {% endif %}>
+          <div class="task">
+            <input type="checkbox" class="task-checkbox" {% if task.completed %}checked{% endif %} onclick="updateTaskStatus(this, {{ task.id }})" disabled>
+            <span class="task-name">{{ task.title }}</span>
+              {% if task.description %}
+              <span class="task-description">{{ task.description }}</span><br>
+              {% endif %}
+              {% if task.due_date %}
+              <span class="task-due-date">{{ task.due_date }}</span><br>
+              {% endif %}
+              {% for subtask in task.subtasks %}
+              <input type="checkbox" class="subtask-checkbox" onclick="updateSubtaskStatus(this, {{ subtask.id }})" {% if subtask.completed %}checked{% endif %} disabled>
+              <span class="subtask-name">{{ subtask.title }}</span><br>
+              {% endfor %}
+            </div>
           </div>
-        </div>
-      </span>
+        </span>
+        {% endif %}
       {% endif %}
     {% endfor %} 
   {% else %} <!-- VIEWING MY PAGE -->
     {% for task in info["tasks"] %}
-      <span {% if task.completed %} style="text-decoration: line-through" {% endif %}>
-        <div class="task">
-          <input type="checkbox" class="task-checkbox" {% if task.completed %}checked{% endif %} onclick="updateTaskStatus(this, {{ task.id }})">
-          <span class="task-name">{{ task.title }}</span>
-          <div class="task-details">
-            {% if task.description %}
-              <span class="task-description">{{ task.description }}</span><br>
-            {% endif %}
-            {% if task.due_date %}
-              <span class="task-due-date">{{ task.due_date }}</span><br>
-            {% endif %}
-            {% for subtask in task.subtasks %}
-              <input type="checkbox" class="subtask-checkbox" onclick="updateSubtaskStatus(this, {{ subtask.id }})" {% if subtask.completed %}checked{% endif %}>
-              <span class="subtask-name">{{ subtask.title }}</span><br>
-            {% endfor %}
+      {% if task.archive_status == False %}
+        <span {% if task.completed %} style="text-decoration: line-through" {% endif %}>
+          <div class="task">
+            <input type="checkbox" class="task-checkbox" {% if task.completed %}checked{% endif %} onclick="updateTaskStatus(this, {{ task.id }})">
+            <span class="task-name">{{ task.title }}</span>
+            <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"></button>
+              <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                <form class="dropdown_request" action="{{ url_for('user_page', user=user )}}" method="POST">
+                  <input type = "hidden" name = "task_id" value = "{{ task.id }}">
+                  <button type="submit" name="dropdown" id = "dropdown" value="1" class="dropdown-item">Edit task</button>
+                  <button type="submit" name="dropdown" id = "dropdown" value="0" class="dropdown-item">Archive task</button>
+                  <button type="submit" name="dropdown" id = "dropdown" value="-1" class="dropdown-item">Delete task</button>
+                </form>                
+              </div>
+            <div class="task-details">
+              {% if task.description %}
+                <span class="task-description">{{ task.description }}</span><br>
+              {% endif %}
+              {% if task.due_date %}
+                <span class="task-due-date">{{ task.due_date }}</span><br>
+              {% endif %}
+              {% for subtask in task.subtasks %}
+                <input type="checkbox" class="subtask-checkbox" onclick="updateSubtaskStatus(this, {{ subtask.id }})" {% if subtask.completed %}checked{% endif %}>
+                <span class="subtask-name">{{ subtask.title }}</span><br>
+              {% endfor %}
+            </div>
           </div>
-        </div>
-      </span>
-      {% endfor %}
+        </span>
+      {% endif %}
+    {% endfor %}
   {% endif %}
 </div>
 
@@ -122,7 +131,3 @@
   }
 </script> 
 {% endblock %}
-
-<!-- TODO: add "edit" button -->
-<!-- TODO: add "delete" button -->
-<!-- TODO: make completed button easier to use (larger, more dedicated) -->
