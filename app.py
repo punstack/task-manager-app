@@ -395,8 +395,6 @@ if __name__ == '__main__':
     app.run(debug=True)
     
 
-#TO-DO: should the web app have a social feature (friends or following/followers)?
-#TO-DO: how would users see other peoples' tasks? HOW is there a social element in a task managing app?
 #TO-DO: fix up home page to be pretty :)
 #TO-DO: fix up my profile to be pretty
 #TO-DO: add "completed" and "remove" buttons for all tasks
