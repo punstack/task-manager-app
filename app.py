@@ -25,7 +25,6 @@ migrate = Migrate(app, db)
 friends = db.Table('friends',
     db.Column('user_id', db.String(36), db.ForeignKey('User.id'), primary_key = True),
     db.Column('friend_id', db.String(36), db.ForeignKey('User.id'), primary_key = True),
-    db.Column('is_accepted', db.Boolean, default = False) # need to check if this is still usable??
 )
 
 class Subtask(db.Model):
@@ -362,7 +361,7 @@ def search_tasks(query):
         ).all()
     else:
         results = []
-        
+
     return results
 
 @app.route("/search", methods = ["GET"])
@@ -396,6 +395,29 @@ def archive():
             info["tasks"] = info["stored_user"].tasks
     
     return render_template("archive.html", info = info)
+
+@app.route("/friends")
+def friends_page():
+    stored_user = User.query.filter_by(user_lower=session["user"].lower()).first()
+    # outgoing friend requests -- need to select receiver_id and query for username
+    outgoing_requests = FriendRequest.query.filter_by(sender_id = stored_user.id)
+    outgoing_user = [User.query.get(request.receiver_id) for request in outgoing_requests]
+    outgoing_users = [out.user for out in outgoing_user]
+    # incoming friend requests -- need to select sender_id and query for username
+    incoming_requests = FriendRequest.query.filter_by(receiver_id = stored_user.id)
+    incoming_user = [User.query.get(request.sender_id) for request in incoming_requests]
+    incoming_users = [inc.user for inc in incoming_user]
+
+    friends_list = stored_user.friends.all()
+    friends_users = [friend.user for friend in friends_list]
+    
+    info =  {
+        'stored_user': stored_user,
+        'outgoing': outgoing_users,
+        'incoming': incoming_users,
+        'friends': friends_users
+    }
+    return render_template("friends.html", info = info)
 
 def delete_status(user):
     try:

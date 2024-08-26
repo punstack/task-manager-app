@@ -12,13 +12,14 @@
 {% block home_status %}{% endblock %}
 {% block user_status %}{% endblock %}
 {% block archive_status %}{% endblock %}
+{% block friends_status %}{% endblock %}
 {% block settings_status %}{% endblock %}
 {% block add_status %}active{% endblock %}
 
 {% block content %}
 <div class="container">
     <form class="form-signin" action="{{ url_for('add_task') }}" method="POST">
-        
+        <br>
         <div>
             <h1 class="h3 mb-3 display-4 font-weight-normal text-center">Add Task</h1>
         </div>

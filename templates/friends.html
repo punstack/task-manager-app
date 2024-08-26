@@ -1,0 +1,51 @@
+{% extends "layout.html" %}
+{% block title %}Task Manager - Archived Tasks{% endblock %}
+
+{% block home_status %}{% endblock %}
+{% block user_status %}{% endblock %}
+{% block archive_status %}active{% endblock %}
+{% block friends_status %}{% endblock %}
+{% block settings_status %}{% endblock %}
+{% block add_status %}{% endblock %}
+
+{% block content %}
+<div class="position-relative m-md-3">
+  <br>
+  <div>
+    <h1 class="h3 mb-3 display-4 font-weight-normal text-center">{{ info["stored_user"].user }}'s Friends</h1>
+  </div>
+  <!-- friends -->
+  <div>
+    <strong><p class="text-center">Friends</p></strong>
+    <ul>
+        {% for friend in info["friends"] %}
+        <li>
+            <a href = {{ url_for("user_page", user = friend) }}>{{ friend }}</a>
+        </li>
+        {% endfor %}
+    </ul>
+  </div>
+  <!-- incoming friend requests -->
+  <div>
+    <strong><p class="text-center">Incoming Friend Requests</p></strong>
+    <ul>
+        {% for request in info["incoming"] %}
+        <li>
+            <a href = {{ url_for("user_page", user = request) }}>{{ request }}</a>
+        </li>
+        {% endfor %}
+    </ul>
+  </div>
+  <!-- outgoing friend requests -->
+  <div>
+    <strong><p class="text-center">Outgoing Friend Requests</p></strong>
+    <ul>
+        {% for request in info["outgoing"] %}
+        <li>
+            <a href = {{ url_for("user_page", user = request) }}>{{ request }}</a>
+        </li>
+        {% endfor %}
+    </ul>
+  </div>
+</div>
+{% endblock %}
