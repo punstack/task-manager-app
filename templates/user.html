@@ -13,17 +13,22 @@
   </div>
 
   <!-- USER INTERACTIONS -->
-  {% if user != session.get("user") %}
+  {% if user != info["stored_user"].user %}
     <a>Making sure this still works</a><br>
-    {% if user in user.friends %}
-      <a>Already Friends</a>
+    {% if info["viewed_user"] in info["stored_user"].friends %}
+      <button class="btn btn-secondary btn-block" type="button">Already Friends</button>
+    {% elif info["viewed_user"].has_pending_request(info["stored_user"]) %}
+      <button class="btn btn-secondary btn-block" type="button">Delete Friend Request</button>
+      <button class="btn btn-primary btn-block" type="button">Accept Friend Request</button>
+    {% elif info["stored_user"].has_pending_request(info["viewed_user"]) %}
+      <button class="btn btn-secondary btn-block" type="button">Pending Friend Request</button>
     {% else %}
-      <a>Send Friend Request</a>
+      <button class="btn btn-primary btn-block" type="button">Send Friend Request</button>
     {% endif %}
   {% endif %}
 
   {% if user != session.get("user") %}
-    {% for task in tasks %}
+    {% for task in info["tasks"] %}
       {% if task.task_status == True %}
       <span {% if task.completed %} style="text-decoration: line-through" {% endif %}>
         <div class="task">
@@ -46,7 +51,7 @@
       {% endif %}
     {% endfor %} 
   {% else %}
-    {% for task in tasks %}
+    {% for task in info["tasks"] %}
       <span {% if task.completed %} style="text-decoration: line-through" {% endif %}>
         <div class="task">
           <input type="checkbox" class="task-checkbox" {% if task.completed %}checked{% endif %} onclick="updateTaskStatus(this, {{ task.id }})">

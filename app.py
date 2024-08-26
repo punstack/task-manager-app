@@ -23,9 +23,9 @@ db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 
 friends = db.Table('friends',
-        db.Column('user_id', db.String(36), db.ForeignKey('User.id'), primary_key = True),
-        db.Column('friend_id', db.String(36), db.ForeignKey('User.id'), primary_key = True),
-        db.Column('is_accepted', db.Boolean, default = False) # need to check if this is still usable??
+    db.Column('user_id', db.String(36), db.ForeignKey('User.id'), primary_key = True),
+    db.Column('friend_id', db.String(36), db.ForeignKey('User.id'), primary_key = True),
+    db.Column('is_accepted', db.Boolean, default = False) # need to check if this is still usable??
 )
 
 class Subtask(db.Model):
@@ -36,7 +36,7 @@ class Subtask(db.Model):
     task_id = db.Column(db.Integer, db.ForeignKey('Task.id'), nullable = False)
 
     def __init__(self, title, completed, task_id):
-        self.title = title  
+        self.title = title
         self.completed = completed
         self.task_id = task_id
 
@@ -52,7 +52,7 @@ class Task(db.Model):
     subtasks = db.relationship('Subtask', backref='task', lazy = True)
 
     def __init__(self, title, description, due_date, completed, task_status, user_id):
-        self.title = title  
+        self.title = title
         self.description = description
         self.due_date = due_date
         self.completed = completed
@@ -113,7 +113,7 @@ class User(db.Model):
             user.friends.remove(self)
             db.session.commit()
 
-    def has_pending_request(self, user):
+    def has_pending_request(self, user): # OUTGOING friend requests
         return FriendRequest.query.filter_by(sender_id=self.id, receiver_id=user.id).count() > 0
     ###
 
@@ -123,7 +123,7 @@ class FriendRequest(db.Model):
     sender_id = db.Column(db.String(36), db.ForeignKey('User.id'), nullable=False)
     receiver_id = db.Column(db.String(36), db.ForeignKey('User.id'), nullable=False)
     timestamp = db.Column(db.DateTime, default=datetime.now())
-    
+
     sender = db.relationship('User', foreign_keys=[sender_id], backref=db.backref('sent_requests', lazy='dynamic'))
     receiver = db.relationship('User', foreign_keys=[receiver_id], backref=db.backref('received_requests', lazy='dynamic'))
 
@@ -165,7 +165,7 @@ def add_task():
         subtasks = request.form.getlist("subtask[]") # else None (except it just says "")
         due_date = request.form.get("due_date") # else None # prints as YYYY-MM-DD
         task_status = request.form.get("task_status") # True or False
-        
+
         try:
             if type(due_date) is str:
                 due_date = datetime.strptime(due_date, '%Y-%m-%d')
@@ -183,7 +183,7 @@ def add_task():
         if "user" in session:
             user = session["user"].lower()
             stored_user = User.query.filter_by(user_lower=user).first()
-        
+
         new_task = Task(title = title, description = description, due_date = due_date, completed = False, task_status = task_status, user_id = stored_user.id)
         db.session.add(new_task)
         db.session.flush()
@@ -241,7 +241,7 @@ def login():
 def signup():
     if "user" in session:
         return redirect(url_for("user_page", user = session["user"]))
-    
+
     if request.method == "POST":
         email = request.form["email"]
         user = request.form["username"]
@@ -249,7 +249,7 @@ def signup():
 
         stored_user = User.query.filter_by(user_lower = user.lower()).first() # this should be False if new user, True if existing user
         stored_email = User.query.filter_by(email_lower = email.lower()).first()
-        
+
         if stored_email:
             flash("An account with this email already exists. Please log in.", "info")
             return render_template("signup.html")
@@ -267,30 +267,33 @@ def signup():
         return render_template("signup.html")
 
 @app.route("/<user>")
-def user_page(user):    
+def user_page(user):
     if "user" in session:
-        logged_in_user = session["user"]
+        # information for passed dictionary
+        info = {
+            'stored_user': User.query.filter_by(user_lower=session["user"].lower()).first(),
+            'viewed_user': None,
+            'tasks': None,
+        }
 
-        # re-query logged-in user
-        stored_user = User.query.filter_by(user_lower=logged_in_user.lower()).first()
-        if not stored_user:
+        if not info["stored_user"]:
             flash("Your account no longer exists. Please log in again.", "error")
             session.pop("user", None)
             return redirect(url_for("login"))
 
         # if the logged-in user is viewing their own profile, use re-queried user data
-        if user.lower() == stored_user.user_lower:
-            tasks_passed = stored_user.tasks
-            return render_template("user.html", user=stored_user.user, tasks= tasks_passed)
+        if user.lower() == info["stored_user"].user_lower:
+            info["tasks"] = info["stored_user"].tasks
+            return render_template("user.html", user = info["stored_user"].user, info = info)
         else:
-            viewed_user = User.query.filter_by(user_lower=user.lower()).first()
-            if viewed_user:
-                tasks_passed = viewed_user.tasks
-                return render_template("user.html", user=viewed_user.user, tasks= tasks_passed)
+            info["viewed_user"] = User.query.filter_by(user_lower=user.lower()).first()
+            if info["viewed_user"]:
+                info["tasks"] = info["viewed_user"].tasks
+                return render_template("user.html", user = info["viewed_user"].user, info = info)
             else:
                 flash("User not found.", "error")
-                tasks_passed = stored_user.tasks
-                return render_template("user.html", user=stored_user.user, tasks= tasks_passed)
+                info["tasks"] = info["stored_user"].tasks
+                return render_template("user.html", user = info["stored_user"].user, info = info)
 
     flash("To view profiles, you need to log in first.", "info")
     return redirect(url_for("login"))
@@ -323,10 +326,10 @@ def settings():
 
             try:
                 db.session.commit()
-                
+
                 # update session with new username
                 session["user"] = new_username
-                
+
                 flash("Your credentials have been updated.", "info")
                 return redirect(url_for("user_page", user=new_username))
 
@@ -354,21 +357,43 @@ db.session.delete(stored_user)
 def logout():
     if "user" in session:
         flash("You have been logged out.", "info")
-        session.pop("user", None)   
+        session.pop("user", None)
     return redirect(url_for("login"))
 
 #### FOR DEBUG USE
 
-@app.route("/view")
-def view():
-    return render_template("view.html", values=Task.query.all(), values2 = Subtask.query.all())
-
 @app.route("/view_users")
 def view_users():
+    admin = User.query.filter_by(user_lower="admin").first()
+    punstack = User.query.filter_by(user_lower="punstack").first()
+    punstack.remove_friend(admin)
+    admin.send_friend_request(punstack)
+    punstack.send_friend_request(admin)
+    #punstack.accept_friend_request(admin)
+    #print(punstack.is_friend_with(admin))
+    '''
+    # need to implement these functions! yay!
+    admin = User.query.filter_by(user_lower="admin").first()
+    punstack = User.query.filter_by(user_lower="punstack").first()
+
+    #print(admin)
+    #print(punstack)
+    admin.send_friend_request(punstack)
+    print(punstack.has_pending_request(admin))
+    print(admin.has_pending_request(punstack))
+    punstack.accept_friend_request(admin)
+    print(punstack.is_friend_with(admin))
+    #punstack.decline_friend_request(admin)
+    print(punstack.is_friend_with(admin))
+    #punstack.remove_friend(admin)
+    print(admin.has_pending_request(punstack))
+    '''
     return render_template("view_users.html", values=User.query.all())
 
 if __name__ == '__main__':
+    
     app.run(debug=True)
+    
 
 #TO-DO: should the web app have a social feature (friends or following/followers)?
 #TO-DO: how would users see other peoples' tasks? HOW is there a social element in a task managing app?
