@@ -59,6 +59,7 @@ class Task(db.Model):
         self.completed = completed
         self.task_status = task_status
         self.archive_status = archive_status
+        self.archive_status = archive_status
         self.user_id = user_id
 
 class User(db.Model):
