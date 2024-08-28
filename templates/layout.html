@@ -102,7 +102,7 @@
 
       {% if session.get("user") %}
       <form class="form-inline navbar-right" action = "{{ url_for('search') }}" method = "GET">
-        <input name = "query" class="form-control mr-2" type="search" placeholder="Search..." aria-label="Search">
+        <input name = "query" class="form-control mr-2" type="search" placeholder="Search users..." aria-label="Search">
         <div class="horizontalgap" style="width:10px"></div>
         <button class="btn btn-outline-light" type="submit">Search</button>
       </form>

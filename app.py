@@ -104,7 +104,7 @@ class User(db.Model):
             db.session.delete(friend_request)
             db.session.commit()
 
-    def decline_friend_request(self, user): # make sure this works
+    def decline_friend_request(self, user):
         friend_request = FriendRequest.query.filter_by(sender_id=user.id, receiver_id=self.id).first()
         if friend_request:
             db.session.delete(friend_request)
@@ -134,7 +134,7 @@ class FriendRequest(db.Model):
         return f'<FriendRequest from {self.sender.username} to {self.receiver.username}>'
 
 with app.app_context():
-    #db.drop_all() # drop all tables // not necessary unless new columns are added to models
+    #db.drop_all() # drop all tables
     db.create_all() # create tables based on models
 
 @app.before_request
@@ -147,43 +147,26 @@ def check_user_existence():
 
 @app.route('/')
 def index():
-    # remove all entries in the database
-    '''
-    for task in Task.query.all():
-        Task.query.delete()
-    db.session.commit()
-
-    for user in User.query.all():
-        User.query.delete()
-    db.session.commit()
-    '''
     return render_template('index.html')
 
 @app.route('/add-task', methods = ["GET", "POST"])
 def add_task():
     if request.method == "POST":
         title = request.form.get("title")
-        description = request.form.get("description", "")  # Default to empty string if None
+        description = request.form.get("description", "")
         subtasks = request.form.getlist("subtask[]")
         due_date = request.form.get("due_date")
         task_status = request.form.get("task_status") # False = private, True = public
         task_id = request.form.get("task_id")
 
-        try:
-            if isinstance(due_date, str) and due_date:
-                due_date = datetime.strptime(due_date, '%Y-%m-%d')
-            else:
-                due_date = None
-        except Exception as e:
-            flash(f"An error occurred while processing the due date: {str(e)}", "error")
+        if isinstance(due_date, str) and due_date:
+            due_date = datetime.strptime(due_date, '%Y-%m-%d')
+        else:
             due_date = None
 
         if task_status == "true":
             task_status = True
-        elif task_status == "false":
-            task_status = False
         else:
-            flash("Invalid task status", "error")
             task_status = False
 
         if "user" in session:
@@ -304,7 +287,6 @@ def friend_request_status(user, other):
 @app.route("/<user>", methods = ["GET", "POST"])
 def user_page(user):
     if "user" in session:
-        # information for passed dictionary
         info = {
             'stored_user': User.query.filter_by(user_lower=session["user"].lower()).first(),
             'viewed_user': None,
@@ -362,7 +344,6 @@ def search_tasks(query):
         ).all()
     else:
         results = []
-
     return results
 
 @app.route("/search", methods = ["GET"])
@@ -389,7 +370,7 @@ def archive():
             db.session.commit()
             flash("Task deleted.", "success")
             info["tasks"] = info["stored_user"].tasks
-        elif dropdown_request == "0": # task to be achived
+        elif dropdown_request == "0": # task to be unachived
             task.archive_status = False
             db.session.commit()
             flash("Task unarchived.", "success")
@@ -400,11 +381,11 @@ def archive():
 @app.route("/friends")
 def friends_page():
     stored_user = User.query.filter_by(user_lower=session["user"].lower()).first()
-    # outgoing friend requests -- need to select receiver_id and query for username
+    # outgoing friend requests
     outgoing_requests = FriendRequest.query.filter_by(sender_id = stored_user.id)
     outgoing_user = [User.query.get(request.receiver_id) for request in outgoing_requests]
     outgoing_users = [out.user for out in outgoing_user]
-    # incoming friend requests -- need to select sender_id and query for username
+    # incoming friend requests
     incoming_requests = FriendRequest.query.filter_by(receiver_id = stored_user.id)
     incoming_user = [User.query.get(request.sender_id) for request in incoming_requests]
     incoming_users = [inc.user for inc in incoming_user]
@@ -493,12 +474,6 @@ def logout():
         session.pop("user", None)
     return redirect(url_for("login"))
 
-#### FOR DEBUG USE
-
-@app.route("/view_users")
-def view_users():
-    return render_template("view_users.html", values=User.query.all())
-
 if __name__ == '__main__':
     setting_user = User(user = "settings", email = "", password = None)
     add_task_user = User(user = "add-task", email = "", password = None)
@@ -508,4 +483,4 @@ if __name__ == '__main__':
     login_user = User(user = "login", email = "", password = None)
     user_user = User(user = "user", email = "", password = None)
 
-    app.run(debug=True)
+    app.run()
