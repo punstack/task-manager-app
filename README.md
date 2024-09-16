@@ -7,7 +7,7 @@ This web application was built using the Flask framework with Python with HTML, 
 Clone the project:
 
 ```bash
-  git clone https://github.com/punstack/task-manager-app
+  git clone https://github.com/punstack/task-manager-app.git
 ```
 
 Go to the project directory:
