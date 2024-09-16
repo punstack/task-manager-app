@@ -18,7 +18,7 @@
 
 {% block content %}
 <div class="container">
-    <form class="form-signin" action="{{ url_for('add_task') }}" method="POST">
+    <form class="form-signin" action="{{ url_for('view_task.add_task') }}" method="POST">
         <br>
         <div>
             <h1 class="h3 mb-3 display-4 font-weight-normal text-center">Add Task</h1>
@@ -88,7 +88,7 @@
         <div class="container">
             <div class="row">
                 <div class="col-sm text-center">
-                    <a href="{{ url_for("user_page", user=session["user"]) }}"><button type="button"
+                    <a href="{{ url_for("view_user.user_page", user=session["user"]) }}"><button type="button"
                             class="btn btn-secondary">Cancel</button>
                     </a>
                 </div>

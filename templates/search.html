@@ -19,7 +19,7 @@
         {% if results %}
         <ul>
             {% for user in results %}
-                <li><a href = {{url_for("user_page", user = user.user)}}>{{ user.user }}</a></li>
+                <li><a href = {{url_for("view_user.user_page", user = user.user)}}>{{ user.user }}</a></li>
             {% endfor %}
         </ul>
         {% else %}

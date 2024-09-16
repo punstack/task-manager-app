@@ -18,18 +18,18 @@
   <!-- USER INTERACTIONS -->
   {% if user != info["stored_user"].user %}
     {% if info["viewed_user"] in info["stored_user"].friends %}
-      <form class = "friend_request_status" action="{{ url_for('user_page', user=user )}}" method = "POST">
+      <form class = "friend_request_status" action="{{ url_for('view_user.user_page', user=user )}}" method = "POST">
         <button id = "request" name = "request" class="btn btn-secondary btn-block" type="submit" value = "-1">Remove Friend</button>
       </form>
     {% elif info["viewed_user"].has_pending_request(info["stored_user"]) %}
-      <form class = "friend_request_status" action="{{ url_for('user_page', user=user )}}" method = "POST">
+      <form class = "friend_request_status" action="{{ url_for('view_user.user_page', user=user )}}" method = "POST">
         <button id = "request" name = "request" class="btn btn-secondary btn-block" type="submit" value = "0">Delete Friend Request</button>
         <button id = "request" name = "request" class="btn btn-primary btn-block" type="submit" value = "1">Accept Friend Request</button>
       </form>
     {% elif info["stored_user"].has_pending_request(info["viewed_user"]) %}
       <button class="btn btn-secondary btn-block" type="button">Pending Friend Request</button>
     {% else %}
-      <form class = "friend_request_status" action="{{ url_for('user_page', user=user )}}" method = "POST">
+      <form class = "friend_request_status" action="{{ url_for('view_user.user_page', user=user )}}" method = "POST">
         <button id = "request" name = "request" class="btn btn-primary btn-block" type="submit" value = "2">Send Friend Request</button>
       </form>
     {% endif %}
@@ -69,7 +69,7 @@
             <span class="task-name">{{ task.title }}</span>
             <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"></button>
               <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                <form class="dropdown_request" action="{{ url_for('user_page', user=user )}}" method="POST">
+                <form class="dropdown_request" action="{{ url_for('view_user.user_page', user=user )}}" method="POST">
                   <input type = "hidden" name = "task_id" value = "{{ task.id }}">
                   <button type="submit" name="dropdown" id = "dropdown" value="1" class="dropdown-item">Edit task</button>
                   <button type="submit" name="dropdown" id = "dropdown" value="0" class="dropdown-item">Archive task</button>

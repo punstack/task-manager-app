@@ -67,7 +67,7 @@
         </li>
 
         <li class="nav-item">
-          <a class="nav-link {% block user_status %}{% endblock %}" href="{{url_for("user_page", user=session["user"])}}">My Profile</a>
+          <a class="nav-link {% block user_status %}{% endblock %}" href="{{url_for("view_user.user_page", user=session["user"])}}">My Profile</a>
         </li>
 
         <li class="nav-item">
@@ -101,7 +101,7 @@
       </ul>
 
       {% if session.get("user") %}
-      <form class="form-inline navbar-right" action = "{{ url_for('search') }}" method = "GET">
+      <form class="form-inline navbar-right" action = "{{ url_for('view_task.search') }}" method = "GET">
         <input name = "query" class="form-control mr-2" type="search" placeholder="Search users..." aria-label="Search">
         <div class="horizontalgap" style="width:10px"></div>
         <button class="btn btn-outline-light" type="submit">Search</button>

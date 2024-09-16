@@ -25,7 +25,7 @@
             <span class="task-name">{{ task.title }}</span>
             <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"></button>
               <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                <form class="dropdown_request" action="{{ url_for('archive') }}" method="POST">
+                <form class="dropdown_request" action="{{ url_for('view_task.archive') }}" method="POST">
                   <input type = "hidden" name = "task_id" value = "{{ task.id }}">
                   <button type="submit" name="dropdown" id = "dropdown" value="0" class="dropdown-item">Unarchive task</button>
                   <button type="submit" name="dropdown" id = "dropdown" value="-1" class="dropdown-item">Delete task</button>

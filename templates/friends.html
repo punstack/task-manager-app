@@ -20,7 +20,7 @@
     <ul>
         {% for friend in info["friends"] %}
         <li>
-            <a href = {{ url_for("user_page", user = friend) }}>{{ friend }}</a>
+            <a href = {{ url_for("view_user.user_page", user = friend) }}>{{ friend }}</a>
         </li>
         {% endfor %}
     </ul>
@@ -31,7 +31,7 @@
     <ul>
         {% for request in info["incoming"] %}
         <li>
-            <a href = {{ url_for("user_page", user = request) }}>{{ request }}</a>
+            <a href = {{ url_for("view_user.user_page", user = request) }}>{{ request }}</a>
         </li>
         {% endfor %}
     </ul>
@@ -42,7 +42,7 @@
     <ul>
         {% for request in info["outgoing"] %}
         <li>
-            <a href = {{ url_for("user_page", user = request) }}>{{ request }}</a>
+            <a href = {{ url_for("view_user.user_page", user = request) }}>{{ request }}</a>
         </li>
         {% endfor %}
     </ul>
