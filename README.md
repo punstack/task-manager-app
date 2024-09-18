@@ -1,4 +1,8 @@
 # Task Manager Application
+<p align="center">
+  <img src="https://i.giphy.com/media/v1.Y2lkPTc5MGI3NjExZDRzZW11c3B3ZjRqYnZwNnN3eXN6NmttZzcwdjA4NjBzbWRwMHR0NiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/AdBL4byLpKypsOLR9a/giphy.gif" />
+</p>
+
 Ever felt ovelwhelmed by your growing list of to-dos? Your friendly, neighborhood task manager has arrived! This project stores tasks and subtasks to a social network; tasks can be made private or public. Users can easily manage tasks, allowing them to maintain and easily visualize their list of to-dos.
 
 This web application was built using the Flask framework with Python with HTML, CSS, and (very minimal) JavaScript for front-end design. The database is managed through SQLAlchemy.
